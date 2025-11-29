@@ -11,19 +11,19 @@ export default function App() {
         flex items-center justify-center
       "
     >
-      {/* Fullscreen background system */}
+      {/* Fullscreen background */}
       <BackgroundManager />
 
-      {/* Left pinned shortcuts */}
+      {/* Left shortcuts */}
       <PinnedShortcuts />
 
-      {/* CENTER CONTENT */}
-      <div className="flex flex-col items-center gap-6 z-10">
+      {/* CENTER CONTENT (now full width) */}
+      <div className="flex flex-col gap-6 z-10 w-full">
         <HeroTitle />
         <SearchBar />
       </div>
 
-      {/* Bottom-right widget buttons */}
+      {/* Bottom-right widgets */}
       <WidgetButtons />
     </div>
   );
