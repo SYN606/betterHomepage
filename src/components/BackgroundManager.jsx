@@ -32,16 +32,15 @@ export default function BackgroundManager() {
         if (now - parseInt(savedTime) >= thirtyMin) {
             fetchRandomWallpaper();
         }
-
-    }, []);
+        console.log(backgroundUrl)
+    }, [backgroundUrl]);
 
     // Fetch wallpaper from Picsum Photos
     const fetchRandomWallpaper = async () => {
         try {
-            const image = `https://picsum.photos/1920/1080?random=${Date.now()}`;
-
-            setBackgroundUrl(image);
-            localStorage.setItem("bgImage", image);
+            const image = await fetch(`https://picsum.photos/1920/1080?random`)
+            setBackgroundUrl(image.url);
+            localStorage.setItem("bgImage", image.url);
             localStorage.setItem("bgTimestamp", Date.now().toString());
         } catch (err) {
             console.error("Failed to load wallpaper:", err);
@@ -85,9 +84,9 @@ export default function BackgroundManager() {
             {/* BACKGROUND IMAGE */}
             <div
                 className="
-                    absolute inset-0 
-                    bg-cover bg-center 
-                    blur-[8px] 
+                    absolute inset-0
+                    bg-cover bg-center
+                    blur-[8px]
                     brightness-[0.6]
                     -z-10
                     opacity-100

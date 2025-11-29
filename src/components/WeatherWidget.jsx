@@ -148,12 +148,12 @@ export default function WeatherWidget({ compact = false }) {
                 >
                     <div
                         className="
-                bg-[#0B0B0B]/85 
+                bg-[#0B0B0B]/85
                 backdrop-blur-2xl
                 border border-white/10
-                rounded-3xl 
-                p-6 w-80 
-                text-white 
+                rounded-3xl
+                p-6 w-80
+                text-white
                 shadow-[0_0_40px_rgba(0,0,0,0.6)]
                 animate-fadeIn
                 absolute
@@ -167,10 +167,10 @@ export default function WeatherWidget({ compact = false }) {
                             value={location}
                             onChange={(e) => setLocation(e.target.value)}
                             className="
-                    w-full px-4 py-2 
-                    rounded-xl 
+                    w-full px-4 py-2
+                    rounded-xl
                     bg-white/10 border border-white/20
-                    outline-none 
+                    outline-none
                     mb-4 text-white
                 "
                             placeholder="Enter city"

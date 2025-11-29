@@ -5,8 +5,8 @@ export default function App() {
   return (
     <div
       className="
-        w-full h-screen 
-        relative 
+        w-full h-screen
+        relative
         overflow-hidden
         flex items-center justify-center
       "
