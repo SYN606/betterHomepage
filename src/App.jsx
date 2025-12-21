@@ -4,8 +4,10 @@ import {
   SearchBar,
   WidgetButtons,
   PinnedShortcuts,
+  OnboardingModal,
+  BackgroundManager
 } from "./components";
-import { OnboardingModal, BackgroundManager } from "./components";
+
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
