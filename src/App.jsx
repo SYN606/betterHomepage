@@ -1,7 +1,27 @@
-import { HeroTitle, SearchBar, WidgetButtons, PinnedShortcuts } from "./components";
-import BackgroundManager from "./components/BackgroundManager";
+import { useEffect, useState } from "react";
+import {
+  HeroTitle,
+  SearchBar,
+  WidgetButtons,
+  PinnedShortcuts,
+} from "./components";
+import { OnboardingModal, BackgroundManager } from "./components";
 
 export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const hasOnboarded = localStorage.getItem("hasOnboarded");
+    if (!hasOnboarded) {
+      setShowOnboarding(true);
+    }
+  }, []);
+
+  const closeOnboarding = () => {
+    localStorage.setItem("hasOnboarded", "true");
+    setShowOnboarding(false);
+  };
+
   return (
     <div
       className="
@@ -14,10 +34,15 @@ export default function App() {
       {/* Fullscreen background */}
       <BackgroundManager />
 
+      {/* First-run onboarding (overlay) */}
+      {showOnboarding && (
+        <OnboardingModal onClose={closeOnboarding} />
+      )}
+
       {/* Left shortcuts */}
       <PinnedShortcuts />
 
-      {/* CENTER CONTENT (now full width) */}
+      {/* Center content */}
       <div className="flex flex-col gap-6 z-10 w-full">
         <HeroTitle />
         <SearchBar />
