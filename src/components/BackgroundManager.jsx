@@ -86,7 +86,7 @@ export default function BackgroundManager() {
                 className="
                     absolute inset-0
                     bg-cover bg-center
-                    blur-[8px]
+                    blur-sm
                     brightness-[0.6]
                     -z-10
                     opacity-100
