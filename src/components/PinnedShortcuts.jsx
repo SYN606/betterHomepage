@@ -122,7 +122,7 @@ export default function PinnedShortcuts() {
             {showEditor && (
                 <div
                     className="
-                        fixed inset-0 z-[9999]
+                        fixed inset-0 z-9999
                         bg-black/50 backdrop-blur-md
                         flex items-center justify-center
                         p-4

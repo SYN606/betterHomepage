@@ -36,36 +36,31 @@ const SEARCH_ENGINES = {
     }
 };
 
-/* ---------------- DORKING OPTIONS ---------------- */
+const ENGINE_KEYS = Object.keys(SEARCH_ENGINES);
+
+/* ---------------- DORKS (CURATED) ---------------- */
 
 const DORKS = [
     { label: "site:", value: "site:" },
     { label: "intitle:", value: "intitle:" },
+    { label: "inurl:", value: "inurl:" },
     { label: "filetype:", value: "filetype:" },
+    { label: "ext:", value: "ext:" },
     { label: "\"exact\"", value: "\"\"" },
-    { label: "-exclude", value: "-" }
+    { label: "-exclude", value: "-" },
+    { label: "define:", value: "define:" },
+    { label: "after:", value: "after:" },
+    { label: "before:", value: "before:" }
 ];
 
 /* ---------------- URL DETECTION ---------------- */
 
 const isLikelyUrl = (input) => {
-    const value = input.trim().toLowerCase();
-    if (!value || value.includes(" ")) return false;
-
-    if (/^(https?|ftp|file):\/\//.test(value)) return true;
-
-    if (
-        value.startsWith("localhost") ||
-        /^\d{1,3}(\.\d{1,3}){3}(:\d+)?$/.test(value)
-    ) {
-        return true;
-    }
-
-    if (/^[a-z0-9-]+\.[a-z]{2,}(:\d+)?(\/.*)?$/.test(value)) {
-        return true;
-    }
-
-    return false;
+    const v = input.trim().toLowerCase();
+    if (!v || v.includes(" ")) return false;
+    if (/^(https?|ftp):\/\//.test(v)) return true;
+    if (v.startsWith("localhost")) return true;
+    return /^[a-z0-9-]+\.[a-z]{2,}(:\d+)?(\/.*)?$/.test(v);
 };
 
 /* ---------------- COMPONENT ---------------- */
@@ -74,6 +69,7 @@ export default function SearchBar() {
     const [query, setQuery] = useState("");
     const [engineKey, setEngineKey] = useState("google");
     const [open, setOpen] = useState(false);
+    const [shake, setShake] = useState(false);
 
     const inputRef = useRef(null);
     const dropdownRef = useRef(null);
@@ -81,155 +77,210 @@ export default function SearchBar() {
     /* Load saved engine */
     useEffect(() => {
         const saved = localStorage.getItem("searchEngineKey");
-        if (saved && SEARCH_ENGINES[saved]) setEngineKey(saved);
+        if (saved && SEARCH_ENGINES[saved]) {
+            setEngineKey(saved);
+        }
     }, []);
 
-    /* Close dropdown on outside click */
+    /* Outside click — only when dropdown is open */
     useEffect(() => {
+        if (!open) return;
+
         const handler = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setOpen(false);
             }
         };
+
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
-    }, []);
+    }, [open]);
+
+    /* Keyboard shortcuts */
+    const handleKey = (e) => {
+        if (e.ctrlKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+            e.preventDefault();
+            const idx = ENGINE_KEYS.indexOf(engineKey);
+            const next =
+                e.key === "ArrowUp"
+                    ? (idx - 1 + ENGINE_KEYS.length) % ENGINE_KEYS.length
+                    : (idx + 1) % ENGINE_KEYS.length;
+
+            setEngineKey(ENGINE_KEYS[next]);
+            localStorage.setItem("searchEngineKey", ENGINE_KEYS[next]);
+        }
+
+        if (e.key === "Escape") setOpen(false);
+        if (e.key === "Enter") search();
+    };
 
     /* Search / open URL */
     const search = () => {
-        const input = query.trim();
-        if (!input) return;
-
-        let targetUrl;
-
-        if (isLikelyUrl(input)) {
-            targetUrl = input.match(/^[a-z]+:\/\//)
-                ? input
-                : `https://${input}`;
-        } else {
-            targetUrl =
-                SEARCH_ENGINES[engineKey].url + encodeURIComponent(input);
+        const q = query.trim();
+        if (!q) {
+            setShake(true);
+            setTimeout(() => setShake(false), 300);
+            return;
         }
 
-        window.open(targetUrl, "_blank", "noopener,noreferrer");
+        const url = isLikelyUrl(q)
+            ? q.match(/^[a-z]+:\/\//) ? q : `https://${q}`
+            : SEARCH_ENGINES[engineKey].url + encodeURIComponent(q);
+
+        window.open(url, "_blank", "noopener,noreferrer");
         setQuery("");
         setOpen(false);
     };
 
-    /* Insert dork */
+    /* Insert dork at cursor */
     const insertDork = (value) => {
-        let newValue = query;
-        newValue += value === "\"\"" ? ' ""' : ` ${value}`;
-        setQuery(newValue.trim());
-        inputRef.current?.focus();
+        const el = inputRef.current;
+        if (!el) return;
+
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const insert = value === "\"\"" ? '""' : value;
+
+        const updated =
+            query.slice(0, start) + insert + query.slice(end);
+
+        setQuery(updated);
+
+        requestAnimationFrame(() => {
+            el.focus();
+            el.setSelectionRange(
+                start + insert.length,
+                start + insert.length
+            );
+        });
     };
 
-    const currentEngine = SEARCH_ENGINES[engineKey];
-    const favicon = `https://www.google.com/s2/favicons?domain=${currentEngine.domain}&sz=64`;
+    const engine = SEARCH_ENGINES[engineKey];
+    const favicon = `https://www.google.com/s2/favicons?domain=${engine.domain}&sz=64`;
 
     return (
-        <div className="w-full flex flex-col items-center mt-6 gap-3">
+        <div className="w-full flex flex-col items-center gap-3 mt-6">
 
             {/* SEARCH BAR */}
-            <div className="
-        relative flex items-center
-        w-[85%] max-w-4xl
-        bg-white/5
-        border border-white/10
-        backdrop-blur-xl
-        rounded-full
-        px-4 py-3
-        gap-3
-      ">
+            <div
+                className={`
+                    relative flex items-center gap-3
+                    w-[85%] max-w-4xl
+                    px-5 py-3
+                    rounded-full
+                    backdrop-blur-xl
+                    bg-white/5
+                    border border-white/10
+                    transition
+                    ${shake ? "animate-shake" : ""}
+                    focus-within:border-white/30
+                    focus-within:bg-white/10
+                `}
+            >
                 {/* Engine selector */}
                 <button
                     onClick={() => setOpen(!open)}
+                    aria-expanded={open}
+                    title={`Search with ${engine.name}`}
                     className="
-            w-10 h-10
-            rounded-full
-            bg-white/10
-            hover:bg-white/20
-            flex items-center justify-center
-          "
-                    title={`Search with ${currentEngine.name}`}
+                        w-10 h-10
+                        rounded-full
+                        bg-white/10
+                        hover:bg-white/20
+                        flex items-center justify-center
+                    "
                 >
-                    <img src={favicon} alt={currentEngine.name} className="w-5 h-5" />
+                    <img src={favicon} alt={engine.name} className="w-5 h-5" />
                 </button>
 
-                <FiSearch className="text-white/60 text-xl" />
+                <FiSearch className="text-white/50 text-xl" />
 
                 <input
                     ref={inputRef}
-                    autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && search()}
-                    placeholder={`Search ${currentEngine.name}...`}
-                    className="w-full bg-transparent text-white text-lg outline-none"
+                    onKeyDown={handleKey}
+                    placeholder={`Search ${engine.name} or paste a URL`}
+                    aria-label="Search"
+                    className="
+                        w-full
+                        bg-transparent
+                        outline-none
+                        text-white text-lg
+                        placeholder-white/40
+                    "
                 />
 
-                {/* Dropdown */}
+                {/* ENGINE DROPDOWN */}
                 {open && (
                     <div
                         ref={dropdownRef}
                         className="
-              absolute left-4 top-14
-              flex flex-wrap gap-2
-              bg-white/10
-              backdrop-blur-xl
-              border border-white/10
-              rounded-2xl
-              p-2
-              z-20
-            "
+                            absolute left-1/2 top-16
+                            -translate-x-1/2
+                            grid grid-cols-3 gap-3
+                            p-4
+                            bg-black/70
+                            backdrop-blur-2xl
+                            border border-white/10
+                            rounded-3xl
+                            shadow-[0_10px_40px_rgba(0,0,0,0.6)]
+                            z-30
+                        "
                     >
-                        {Object.entries(SEARCH_ENGINES).map(([key, engine]) => (
-                            <button
-                                key={key}
-                                onClick={() => {
-                                    setEngineKey(key);
-                                    localStorage.setItem("searchEngineKey", key);
-                                    setOpen(false);
-                                }}
-                                className="
-                  w-10 h-10
-                  rounded-xl
-                  hover:bg-white/20
-                  flex items-center justify-center
-                "
-                                title={engine.name}
-                            >
-                                <img
-                                    src={`https://www.google.com/s2/favicons?domain=${engine.domain}&sz=64`}
-                                    alt={engine.name}
-                                    className="w-5 h-5"
-                                />
-                            </button>
-                        ))}
+                        {ENGINE_KEYS.map((key) => {
+                            const e = SEARCH_ENGINES[key];
+                            return (
+                                <button
+                                    key={key}
+                                    onClick={() => {
+                                        setEngineKey(key);
+                                        localStorage.setItem("searchEngineKey", key);
+                                        setOpen(false);
+                                    }}
+                                    className={`
+                                        flex flex-col items-center gap-1
+                                        px-3 py-2 rounded-xl
+                                        transition
+                                        ${engineKey === key
+                                            ? "bg-white/20"
+                                            : "hover:bg-white/10"}
+                                    `}
+                                >
+                                    <img
+                                        src={`https://www.google.com/s2/favicons?domain=${e.domain}&sz=64`}
+                                        alt={e.name}
+                                        className="w-6 h-6"
+                                    />
+                                    <span className="text-xs text-white/80">
+                                        {e.name}
+                                    </span>
+                                </button>
+                            );
+                        })}
                     </div>
                 )}
             </div>
 
-            {/* DORKING CHIPS */}
-            <div className="flex flex-wrap gap-2 justify-center text-sm">
-                {DORKS.map((dork) => (
+            {/* DORK CHIPS */}
+            <div className="flex flex-wrap justify-center gap-2 text-sm">
+                {DORKS.map((d) => (
                     <button
-                        key={dork.label}
-                        onClick={() => insertDork(dork.value)}
+                        key={d.label}
+                        onClick={() => insertDork(d.value)}
                         className="
-              px-3 py-1.5
-              rounded-full
-              bg-white/5
-              border border-white/10
-              hover:bg-white/15
-              text-white/80
-            "
+                            px-3 py-1.5
+                            rounded-full
+                            bg-white/5
+                            border border-white/10
+                            hover:bg-white/15
+                            text-white/80
+                        "
                     >
-                        {dork.label}
+                        {d.label}
                     </button>
                 ))}
             </div>
-
         </div>
     );
 }
