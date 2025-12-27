@@ -5,9 +5,9 @@ import {
   WidgetButtons,
   PinnedShortcuts,
   OnboardingModal,
-  BackgroundManager
+  BackgroundManager,
+  TodoHamburger
 } from "./components";
-
 
 export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -33,16 +33,19 @@ export default function App() {
         flex items-center justify-center
       "
     >
-      {/* Fullscreen background */}
+      {/* Background */}
       <BackgroundManager />
 
-      {/* First-run onboarding (overlay) */}
+      {/* First-run onboarding */}
       {showOnboarding && (
         <OnboardingModal onClose={closeOnboarding} />
       )}
 
-      {/* Left shortcuts */}
+      {/* Left pinned shortcuts */}
       <PinnedShortcuts />
+
+      {/* Top-right Todo */}
+      <TodoHamburger />
 
       {/* Center content */}
       <div className="flex flex-col gap-6 z-10 w-full">
