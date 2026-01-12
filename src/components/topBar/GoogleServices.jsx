@@ -22,21 +22,12 @@ const SERVICES = [
 
 export default function GoogleServices() {
     const [open, setOpen] = useState(false);
-    const [avatarUrl, setAvatarUrl] = useState(null);
     const [lastUsed, setLastUsed] = useState(
         () => localStorage.getItem("google:lastService")
     );
 
     const panelRef = useRef(null);
     const buttonRef = useRef(null);
-
-    /* Best-effort avatar */
-    useEffect(() => {
-        const img = new Image();
-        img.src = "https://lh3.googleusercontent.com/a/default-user=s96-c";
-        img.onload = () => setAvatarUrl(img.src);
-        img.onerror = () => setAvatarUrl(null);
-    }, []);
 
     /* Outside click */
     useEffect(() => {
@@ -88,11 +79,7 @@ export default function GoogleServices() {
           ${open ? "bg-black/60 ring-2 ring-white/20" : "bg-black/40 hover:bg-black/55"}
         `}
             >
-                {avatarUrl ? (
-                    <img src={avatarUrl} alt="Google avatar" className="w-8 h-8 rounded-full object-cover" />
-                ) : (
-                    <FcGoogle size={20} />
-                )}
+                <FcGoogle size={20} />
             </button>
 
             {/* PANEL */}
@@ -108,6 +95,7 @@ export default function GoogleServices() {
             animate-scaleIn z-40
           "
                 >
+                    {/* SERVICES GRID */}
                     <div className="grid grid-cols-3 gap-3">
                         {SERVICES.map((service, i) => {
                             const Icon = service.icon;
@@ -137,6 +125,25 @@ export default function GoogleServices() {
                             );
                         })}
                     </div>
+
+                    {/* DIVIDER */}
+                    <div className="my-3 h-px bg-white/10" />
+
+                    {/* ACCOUNT LINK */}
+                    <button
+                        onClick={() => {
+                            window.open("https://myaccount.google.com", "_blank", "noopener");
+                            setOpen(false);
+                        }}
+                        className="
+              w-full text-xs text-white/60
+              hover:text-white
+              transition
+              text-center
+            "
+                    >
+                        Manage your Google Account
+                    </button>
 
                     <p className="mt-3 text-[10px] text-white/40 text-center">
                         G → toggle • 1–9 → open • Esc → close
