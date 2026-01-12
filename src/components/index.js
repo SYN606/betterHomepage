@@ -4,7 +4,8 @@ import SearchBar from "./SearchBar";
 import WidgetButtons from "./WidgetButtons";
 import BackgroundManager from "./BackgroundManager";
 import OnboardingModal from "./OnboardingModal";
-import TodoHamburger from "./TodoHamburger";
+import TodoHamburger from "./topBar/TodoHamburger";
+import GoogleServices from "./topBar/GoogleServices";
 
 export {
     HeroTitle,
@@ -13,5 +14,6 @@ export {
     WidgetButtons,
     BackgroundManager,
     OnboardingModal,
-    TodoHamburger
+    TodoHamburger,
+    GoogleServices
 }

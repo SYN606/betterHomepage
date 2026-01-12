@@ -6,7 +6,8 @@ import {
   PinnedShortcuts,
   OnboardingModal,
   BackgroundManager,
-  TodoHamburger
+  TodoHamburger,
+  GoogleServices
 } from "./components";
 
 export default function App() {
@@ -45,7 +46,13 @@ export default function App() {
       <PinnedShortcuts />
 
       {/* Top-right Todo */}
-      <TodoHamburger />
+      {/* Top-right utilities */}
+      <div
+        className="absolute top-6 right-6 z-30 flex items-center gap-3">
+        <GoogleServices />
+        <TodoHamburger />
+      </div>
+
 
       {/* Center content */}
       <div className="flex flex-col gap-6 z-10 w-full">
