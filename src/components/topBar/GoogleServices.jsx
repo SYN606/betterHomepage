@@ -10,6 +10,8 @@ import {
     SiGoogledocs
 } from "react-icons/si";
 
+/* ---------------- SERVICES ---------------- */
+
 const SERVICES = [
     { name: "Gmail", icon: SiGmail, url: "https://mail.google.com/mail/u/0/#inbox" },
     { name: "YouTube", icon: SiYoutube, url: "https://www.youtube.com/feed/subscriptions" },
@@ -19,6 +21,20 @@ const SERVICES = [
     { name: "Calendar", icon: SiGooglecalendar, url: "https://calendar.google.com/calendar/u/0/r/week" },
     { name: "Maps", icon: SiGooglemaps, url: "https://maps.google.com" }
 ];
+
+/* ---------------- BRAND COLORS ---------------- */
+
+const SERVICE_COLORS = {
+    Gmail: "#EA4335",
+    YouTube: "#FF0000",
+    Drive: "#4285F4",
+    Photos: "#DB4437",
+    Docs: "#4285F4",
+    Calendar: "#1A73E8",
+    Maps: "#34A853"
+};
+
+/* ---------------- COMPONENT ---------------- */
 
 export default function GoogleServices() {
     const [open, setOpen] = useState(false);
@@ -32,6 +48,7 @@ export default function GoogleServices() {
     /* Outside click */
     useEffect(() => {
         if (!open) return;
+
         const handler = (e) => {
             if (
                 panelRef.current &&
@@ -41,6 +58,7 @@ export default function GoogleServices() {
                 setOpen(false);
             }
         };
+
         document.addEventListener("mousedown", handler);
         return () => document.removeEventListener("mousedown", handler);
     }, [open]);
@@ -50,6 +68,7 @@ export default function GoogleServices() {
         const handler = (e) => {
             if (e.key === "g" || e.key === "G") setOpen(v => !v);
             if (!open) return;
+
             if (e.key === "Escape") setOpen(false);
 
             const index = Number(e.key) - 1;
@@ -69,14 +88,20 @@ export default function GoogleServices() {
 
     return (
         <div className="relative">
-            {/* BUTTON */}
+            {/* GOOGLE BUTTON */}
             <button
                 ref={buttonRef}
                 onClick={() => setOpen(v => !v)}
                 title="Google services (G)"
-                className={`w-10 h-10 rounded-full backdrop-blur-xl border border-white/10
-          flex items-center justify-center transition-all
-          ${open ? "bg-black/60 ring-2 ring-white/20" : "bg-black/40 hover:bg-black/55"}
+                className={`
+          w-10 h-10 rounded-full
+          flex items-center justify-center
+          border border-white/10
+          backdrop-blur-xl
+          transition-all
+          ${open
+                        ? "bg-black/65 ring-2 ring-white/20"
+                        : "bg-black/45 hover:bg-black/60"}
         `}
             >
                 <FcGoogle size={20} />
@@ -86,40 +111,45 @@ export default function GoogleServices() {
             {open && (
                 <div
                     ref={panelRef}
+                    role="menu"
+                    aria-label="Google services"
                     className="
-            absolute right-0 mt-4 w-72
-            bg-black/65 backdrop-blur-2xl
-            border border-white/10 rounded-3xl
-            p-4 text-white/85
-            shadow-[0_12px_40px_rgba(0,0,0,0.7)]
-            animate-scaleIn z-40
+            absolute right-0 mt-3 w-72
+            bg-black/80 backdrop-blur-2xl
+            border border-white/15
+            rounded-3xl
+            p-4
+            shadow-[0_20px_60px_rgba(0,0,0,0.7)]
+            animate-scaleIn
+            z-40
           "
                 >
                     {/* SERVICES GRID */}
                     <div className="grid grid-cols-3 gap-3">
-                        {SERVICES.map((service, i) => {
+                        {SERVICES.map((service) => {
                             const Icon = service.icon;
+                            const active = lastUsed === service.name;
+
                             return (
                                 <button
                                     key={service.name}
-                                    title={`${i + 1}. ${service.name}`}
                                     onClick={() => openService(service)}
+                                    title={service.name}
                                     className={`
-                    group flex items-center justify-center
-                    h-14 rounded-xl border transition
-                    ${lastUsed === service.name
+                    group h-14 rounded-xl
+                    flex items-center justify-center
+                    border transition
+                    ${active
                                             ? "bg-white/15 border-white/30"
-                                            : "bg-white/5 border-white/10 hover:bg-white/15"
-                                        }
+                                            : "bg-white/5 border-white/10 hover:bg-white/15"}
                   `}
                                 >
                                     <Icon
-                                        className="
-                      text-xl text-white/60
-                      transition-all
-                      group-hover:scale-110
-                      group-hover:text-current
-                    "
+                                        className="text-xl transition-transform group-hover:scale-110"
+                                        style={{
+                                            color: SERVICE_COLORS[service.name],
+                                            opacity: active ? 1 : 0.85
+                                        }}
                                     />
                                 </button>
                             );
@@ -129,25 +159,20 @@ export default function GoogleServices() {
                     {/* DIVIDER */}
                     <div className="my-3 h-px bg-white/10" />
 
-                    {/* ACCOUNT LINK */}
+                    {/* ACCOUNT */}
                     <button
                         onClick={() => {
                             window.open("https://myaccount.google.com", "_blank", "noopener");
                             setOpen(false);
                         }}
                         className="
-              w-full text-xs text-white/60
-              hover:text-white
-              transition
-              text-center
+              w-full text-xs
+              text-white/60 hover:text-white
+              transition text-center
             "
                     >
                         Manage your Google Account
                     </button>
-
-                    <p className="mt-3 text-[10px] text-white/40 text-center">
-                        G → toggle • 1–9 → open • Esc → close
-                    </p>
                 </div>
             )}
         </div>
