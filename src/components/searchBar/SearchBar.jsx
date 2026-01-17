@@ -1,286 +1,228 @@
 import { useState, useEffect, useRef } from "react";
 import { FiSearch } from "react-icons/fi";
+import {
+  SiGoogle,
+  SiDuckduckgo,
+  SiBrave,
+  SiWikipedia,
+  SiYoutube
+} from "react-icons/si";
 
-/* ---------------- SEARCH ENGINES ---------------- */
+import useSearchEngine from "./useSearchEngine";
+import { SEARCH_ENGINES, ENGINE_KEYS } from "./searchEngines";
+import { DORKS } from "./dorks";
+import { analyzeInput } from "./searchBrain";
 
-const SEARCH_ENGINES = {
-    google: {
-        name: "Google",
-        url: "https://www.google.com/search?q=",
-        domain: "google.com"
-    },
-    duckduckgo: {
-        name: "DuckDuckGo",
-        url: "https://duckduckgo.com/?q=",
-        domain: "duckduckgo.com"
-    },
-    brave: {
-        name: "Brave",
-        url: "https://search.brave.com/search?q=",
-        domain: "brave.com"
-    },
-    bing: {
-        name: "Bing",
-        url: "https://www.bing.com/search?q=",
-        domain: "bing.com"
-    },
-    wikipedia: {
-        name: "Wikipedia",
-        url: "https://en.wikipedia.org/wiki/Special:Search?search=",
-        domain: "wikipedia.org"
-    },
-    youtube: {
-        name: "YouTube",
-        url: "https://www.youtube.com/results?search_query=",
-        domain: "youtube.com"
-    }
+/* --------------------------------
+   ENGINE ICONS (brand colors)
+--------------------------------- */
+
+const ENGINE_ICONS = {
+  google: { Icon: SiGoogle, color: "#4285F4" },
+  duckduckgo: { Icon: SiDuckduckgo, color: "#DE5833" },
+  brave: { Icon: SiBrave, color: "#FB542B" },
+  bing: { Icon: FiSearch, color: "#008373" },
+  wikipedia: { Icon: SiWikipedia, color: "#FFFFFF" },
+  youtube: { Icon: SiYoutube, color: "#FF0000" }
 };
 
-const ENGINE_KEYS = Object.keys(SEARCH_ENGINES);
-
-/* ---------------- DORKS (CURATED) ---------------- */
-
-const DORKS = [
-    { label: "site:", value: "site:" },
-    { label: "intitle:", value: "intitle:" },
-    { label: "inurl:", value: "inurl:" },
-    { label: "filetype:", value: "filetype:" },
-    { label: "ext:", value: "ext:" },
-    { label: "\"exact\"", value: "\"\"" },
-    { label: "-exclude", value: "-" },
-    { label: "define:", value: "define:" },
-    { label: "after:", value: "after:" },
-    { label: "before:", value: "before:" }
-];
-
-/* ---------------- URL DETECTION ---------------- */
-
-const isLikelyUrl = (input) => {
-    const v = input.trim().toLowerCase();
-    if (!v || v.includes(" ")) return false;
-    if (/^(https?|ftp):\/\//.test(v)) return true;
-    if (v.startsWith("localhost")) return true;
-    return /^[a-z0-9-]+\.[a-z]{2,}(:\d+)?(\/.*)?$/.test(v);
-};
-
-/* ---------------- COMPONENT ---------------- */
+/* --------------------------------
+   SEARCH BAR
+--------------------------------- */
 
 export default function SearchBar() {
-    const [query, setQuery] = useState("");
-    const [engineKey, setEngineKey] = useState("google");
-    const [open, setOpen] = useState(false);
-    const [shake, setShake] = useState(false);
+  const [query, setQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [shake, setShake] = useState(false);
 
-    const inputRef = useRef(null);
-    const dropdownRef = useRef(null);
+  const inputRef = useRef(null);
+  const menuRef = useRef(null);
 
-    /* Load saved engine */
-    useEffect(() => {
-        const saved = localStorage.getItem("searchEngineKey");
-        if (saved && SEARCH_ENGINES[saved]) {
-            setEngineKey(saved);
-        }
-    }, []);
+  const { engineKey, setEngineKey, engine, cycleEngine } =
+    useSearchEngine("duckduckgo");
 
-    /* Outside click — only when dropdown is open */
-    useEffect(() => {
-        if (!open) return;
+  const { Icon, color } = ENGINE_ICONS[engineKey];
 
-        const handler = (e) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-                setOpen(false);
-            }
-        };
-
-        document.addEventListener("mousedown", handler);
-        return () => document.removeEventListener("mousedown", handler);
-    }, [open]);
-
-    /* Keyboard shortcuts */
-    const handleKey = (e) => {
-        if (e.ctrlKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
-            e.preventDefault();
-            const idx = ENGINE_KEYS.indexOf(engineKey);
-            const next =
-                e.key === "ArrowUp"
-                    ? (idx - 1 + ENGINE_KEYS.length) % ENGINE_KEYS.length
-                    : (idx + 1) % ENGINE_KEYS.length;
-
-            setEngineKey(ENGINE_KEYS[next]);
-            localStorage.setItem("searchEngineKey", ENGINE_KEYS[next]);
-        }
-
-        if (e.key === "Escape") setOpen(false);
-        if (e.key === "Enter") search();
+  /* Close menu on outside click */
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
     };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
-    /* Search / open URL */
-    const search = () => {
-        const q = query.trim();
-        if (!q) {
-            setShake(true);
-            setTimeout(() => setShake(false), 300);
-            return;
-        }
+  /* Keyboard shortcuts */
+  const handleKeyDown = (e) => {
+    if (e.ctrlKey && e.key === "ArrowUp") {
+      e.preventDefault();
+      cycleEngine("up");
+    }
+    if (e.ctrlKey && e.key === "ArrowDown") {
+      e.preventDefault();
+      cycleEngine("down");
+    }
+    if (e.key === "Escape") setMenuOpen(false);
+    if (e.key === "Enter") run();
+  };
 
-        const url = isLikelyUrl(q)
-            ? q.match(/^[a-z]+:\/\//) ? q : `https://${q}`
-            : SEARCH_ENGINES[engineKey].url + encodeURIComponent(q);
+  /* Execute search */
+  const run = () => {
+    const result = analyzeInput(query, engineKey);
 
-        window.open(url, "_blank", "noopener,noreferrer");
-        setQuery("");
-        setOpen(false);
-    };
+    if (!result) {
+      setShake(true);
+      setTimeout(() => setShake(false), 200);
+      return;
+    }
 
-    /* Insert dork at cursor */
-    const insertDork = (value) => {
-        const el = inputRef.current;
-        if (!el) return;
+    if (result.url) {
+      window.open(result.url, "_blank", "noopener");
+    }
 
-        const start = el.selectionStart;
-        const end = el.selectionEnd;
-        const insert = value === "\"\"" ? '""' : value;
+    if (result.urls) {
+      result.urls.forEach((u) =>
+        window.open(u, "_blank", "noopener")
+      );
+    }
 
-        const updated =
-            query.slice(0, start) + insert + query.slice(end);
+    setQuery("");
+    setMenuOpen(false);
+  };
 
-        setQuery(updated);
+  /* Insert dork */
+  const insertDork = (value) => {
+    const el = inputRef.current;
+    if (!el) return;
 
-        requestAnimationFrame(() => {
-            el.focus();
-            el.setSelectionRange(
-                start + insert.length,
-                start + insert.length
-            );
-        });
-    };
+    const pos = el.selectionStart;
+    const insert = value === "\"\"" ? '""' : value;
 
-    const engine = SEARCH_ENGINES[engineKey];
-    const favicon = `https://www.google.com/s2/favicons?domain=${engine.domain}&sz=64`;
+    setQuery(q => q.slice(0, pos) + insert + q.slice(pos));
 
-    return (
-        <div className="w-full flex flex-col items-center gap-3 mt-6">
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(pos + insert.length, pos + insert.length);
+    });
+  };
 
-            {/* SEARCH BAR */}
-            <div
-                className={`
-                    relative flex items-center gap-3
-                    w-[85%] max-w-4xl
-                    px-5 py-3
-                    rounded-full
-                    backdrop-blur-xl
-                    bg-white/5
-                    border border-white/10
-                    transition
-                    ${shake ? "animate-shake" : ""}
-                    focus-within:border-white/30
-                    focus-within:bg-white/10
-                `}
-            >
-                {/* Engine selector */}
+  return (
+    <div className="w-full flex flex-col items-center gap-3 mt-6">
+
+      {/* SEARCH BAR */}
+      <div
+        className={`
+          relative flex items-center gap-4
+          w-[85%] max-w-4xl
+          px-5 py-3
+          rounded-full
+          bg-black/40
+          backdrop-blur-md
+          border border-white/15
+          ${shake ? "animate-shake" : ""}
+          focus-within:border-white/30
+        `}
+      >
+        {/* Engine selector */}
+        <button
+          onClick={() => setMenuOpen(v => !v)}
+          title={engine.name}
+          className="
+            w-9 h-9
+            rounded-full
+            flex items-center justify-center
+            bg-white/10 hover:bg-white/20
+            transition
+          "
+        >
+          <Icon style={{ color }} className="text-xl" />
+        </button>
+
+        <FiSearch className="text-white/50 text-lg" />
+
+        <input
+          ref={inputRef}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Search, paste target, or drop a CVE"
+          className="
+            w-full bg-transparent outline-none
+            text-white text-lg
+            placeholder-white/40
+          "
+        />
+
+        {/* ENGINE MENU */}
+        {menuOpen && (
+          <div
+            ref={menuRef}
+            className="
+              absolute left-1/2 top-16 -translate-x-1/2
+              w-64
+              bg-neutral-900
+              border border-white/15
+              rounded-xl
+              shadow-2xl
+              overflow-hidden
+              z-30
+            "
+          >
+            {ENGINE_KEYS.map((k) => {
+              const e = SEARCH_ENGINES[k];
+              const icon = ENGINE_ICONS[k];
+
+              return (
                 <button
-                    onClick={() => setOpen(!open)}
-                    aria-expanded={open}
-                    title={`Search with ${engine.name}`}
-                    className="
-                        w-10 h-10
-                        rounded-full
-                        bg-white/10
-                        hover:bg-white/20
-                        flex items-center justify-center
-                    "
+                  key={k}
+                  onClick={() => {
+                    setEngineKey(k);
+                    setMenuOpen(false);
+                  }}
+                  className={`
+                    w-full px-4 py-3
+                    flex items-center gap-3
+                    text-sm
+                    transition
+                    ${engineKey === k
+                      ? "bg-white/15 text-white"
+                      : "text-white/70 hover:bg-white/10"}
+                  `}
                 >
-                    <img src={favicon} alt={engine.name} className="w-5 h-5" />
+                  <icon.Icon
+                    className="text-lg"
+                    style={{ color: icon.color }}
+                  />
+                  <span className="flex-1 text-left">
+                    {e.name}
+                  </span>
+                  {engineKey === k && (
+                    <span className="text-xs text-white/40">
+                      Active
+                    </span>
+                  )}
                 </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                <FiSearch className="text-white/50 text-xl" />
-
-                <input
-                    ref={inputRef}
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={handleKey}
-                    placeholder={`Search ${engine.name} or paste a URL`}
-                    aria-label="Search"
-                    className="
-                        w-full
-                        bg-transparent
-                        outline-none
-                        text-white text-lg
-                        placeholder-white/40
-                    "
-                />
-
-                {/* ENGINE DROPDOWN */}
-                {open && (
-                    <div
-                        ref={dropdownRef}
-                        className="
-                            absolute left-1/2 top-16
-                            -translate-x-1/2
-                            grid grid-cols-3 gap-3
-                            p-4
-                            bg-black/70
-                            backdrop-blur-2xl
-                            border border-white/10
-                            rounded-3xl
-                            shadow-[0_10px_40px_rgba(0,0,0,0.6)]
-                            z-30
-                        "
-                    >
-                        {ENGINE_KEYS.map((key) => {
-                            const e = SEARCH_ENGINES[key];
-                            return (
-                                <button
-                                    key={key}
-                                    onClick={() => {
-                                        setEngineKey(key);
-                                        localStorage.setItem("searchEngineKey", key);
-                                        setOpen(false);
-                                    }}
-                                    className={`
-                                        flex flex-col items-center gap-1
-                                        px-3 py-2 rounded-xl
-                                        transition
-                                        ${engineKey === key
-                                            ? "bg-white/20"
-                                            : "hover:bg-white/10"}
-                                    `}
-                                >
-                                    <img
-                                        src={`https://www.google.com/s2/favicons?domain=${e.domain}&sz=64`}
-                                        alt={e.name}
-                                        className="w-6 h-6"
-                                    />
-                                    <span className="text-xs text-white/80">
-                                        {e.name}
-                                    </span>
-                                </button>
-                            );
-                        })}
-                    </div>
-                )}
-            </div>
-
-            {/* DORK CHIPS */}
-            <div className="flex flex-wrap justify-center gap-2 text-sm">
-                {DORKS.map((d) => (
-                    <button
-                        key={d.label}
-                        onClick={() => insertDork(d.value)}
-                        className="
-                            px-3 py-1.5
-                            rounded-full
-                            bg-white/5
-                            border border-white/10
-                            hover:bg-white/15
-                            text-white/80
-                        "
-                    >
-                        {d.label}
-                    </button>
-                ))}
-            </div>
-        </div>
-    );
+      {/* DORKS */}
+      <div className="flex flex-wrap justify-center gap-2 text-sm">
+        {DORKS.map(d => (
+          <button
+            key={d.label}
+            onClick={() => insertDork(d.value)}
+            className="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 hover:bg-white/15 text-white/80 transition"
+          >
+            {d.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
 }
