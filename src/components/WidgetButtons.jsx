@@ -5,7 +5,7 @@ import { FiClock, FiCloud } from "react-icons/fi";
 export default function WidgetButtons() {
     const [showClock, setShowClock] = useState(true);
     const [showWeather, setShowWeather] = useState(true);
-    const [glow, setGlow] = useState(false);
+    const [pulse, setPulse] = useState(false);
 
     /* ---------------- LOAD SAVED STATES ---------------- */
 
@@ -21,23 +21,24 @@ export default function WidgetButtons() {
         localStorage.setItem(key, value.toString());
     };
 
-    /* ---------------- MINUTE CHANGE GLOW ---------------- */
+    /* ---------------- MINUTE-ALIGNED PULSE ---------------- */
 
     useEffect(() => {
-        let lastMinute = new Date().getMinutes();
+        const triggerPulse = () => {
+            setPulse(true);
+            setTimeout(() => setPulse(false), 1600);
+        };
 
-        const interval = setInterval(() => {
-            const currentMinute = new Date().getMinutes();
+        const now = new Date();
+        const delay = (60 - now.getSeconds()) * 1000;
 
-            if (currentMinute !== lastMinute) {
-                lastMinute = currentMinute;
+        const timeout = setTimeout(() => {
+            triggerPulse();
+            const interval = setInterval(triggerPulse, 60000);
+            return () => clearInterval(interval);
+        }, delay);
 
-                setGlow(true);
-                setTimeout(() => setGlow(false), 2200);
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
+        return () => clearTimeout(timeout);
     }, []);
 
     /* ---------------- UI ---------------- */
@@ -45,32 +46,49 @@ export default function WidgetButtons() {
     return (
         <div
             className={`
-        absolute bottom-6 right-6
+        absolute bottom-6 right-6 z-20
         flex items-center gap-4
         px-5 py-3
         rounded-2xl
-        backdrop-blur-2xl
-        bg-white/5
+        backdrop-blur-xl
+        bg-black/40
         border border-white/10
-        shadow-[0_0_25px_rgba(0,0,0,0.35)]
-        z-20
-        animate-fadeIn
+        shadow-[0_10px_30px_rgba(0,0,0,0.45)]
         transition-all
-        ${glow ? "rgb-border-glow" : ""}
       `}
         >
-            {/* Weather */}
-            {showWeather && <WeatherWidget compact />}
-
-            {/* Divider */}
-            {showWeather && showClock && (
-                <div className="w-px h-7 bg-white/15 rounded-full" />
+            {/* WEATHER */}
+            {showWeather && (
+                <div className="opacity-90">
+                    <WeatherWidget compact />
+                </div>
             )}
 
-            {/* Clock */}
-            {showClock && <ClockWidget compact />}
+            {/* DIVIDER */}
+            {showWeather && showClock && (
+                <div
+                    className={`
+            w-px h-7
+            transition-all
+            ${pulse ? "bg-white/40" : "bg-white/15"}
+          `}
+                />
+            )}
 
-            {/* Toggles */}
+            {/* CLOCK */}
+            {showClock && (
+                <div
+                    className={`
+            rounded-xl px-1
+            transition
+            ${pulse ? "ring-1 ring-white/30 bg-white/5" : ""}
+          `}
+                >
+                    <ClockWidget compact />
+                </div>
+            )}
+
+            {/* CONTROLS */}
             <div className="flex items-center gap-2 ml-1">
                 {/* Clock toggle */}
                 <button
@@ -79,17 +97,18 @@ export default function WidgetButtons() {
                         setShowClock(val);
                         saveState("showClock", val);
                     }}
+                    aria-pressed={showClock}
+                    title="Toggle Clock"
                     className={`
             w-7 h-7
             flex items-center justify-center
             rounded-lg
-            text-white
-            transition-all
-            ${showClock ? "bg-white/20" : "bg-white/5"}
-            hover:bg-white/20
+            text-white/70
+            transition
+            ${showClock ? "bg-white/15" : "bg-white/5"}
+            hover:bg-white/20 hover:text-white
             active:scale-95
           `}
-                    title="Toggle Clock"
                 >
                     <FiClock size={14} />
                 </button>
@@ -101,17 +120,18 @@ export default function WidgetButtons() {
                         setShowWeather(val);
                         saveState("showWeather", val);
                     }}
+                    aria-pressed={showWeather}
+                    title="Toggle Weather"
                     className={`
             w-7 h-7
             flex items-center justify-center
             rounded-lg
-            text-white
-            transition-all
-            ${showWeather ? "bg-white/20" : "bg-white/5"}
-            hover:bg-white/20
+            text-white/70
+            transition
+            ${showWeather ? "bg-white/15" : "bg-white/5"}
+            hover:bg-white/20 hover:text-white
             active:scale-95
           `}
-                    title="Toggle Weather"
                 >
                     <FiCloud size={14} />
                 </button>

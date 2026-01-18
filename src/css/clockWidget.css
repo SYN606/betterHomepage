@@ -1,0 +1,86 @@
+/* ---------------- CLOCK BASE ---------------- */
+
+.clock-widget {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    border-radius: 14px;
+    backdrop-filter: blur(18px);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+
+    color: #fff;
+    cursor: pointer;
+    user-select: none;
+
+    transition:
+        background 180ms ease,
+        border-color 180ms ease,
+        box-shadow 180ms ease,
+        transform 120ms ease;
+}
+
+.clock-widget:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* ---------------- SIZE VARIANTS ---------------- */
+
+.clock-normal {
+    padding: 0.75rem 1.25rem;
+    font-size: 1.35rem;
+    letter-spacing: 0.06em;
+}
+
+.clock-compact {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+}
+
+/* ---------------- TEXT ---------------- */
+
+.clock-time {
+    line-height: 1;
+}
+
+.clock-format {
+    font-size: 0.65rem;
+    opacity: 0.55;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+/* ---------------- PULSE ANIMATION ---------------- */
+
+@keyframes softPulse {
+    0% {
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0.25);
+    }
+
+    50% {
+        box-shadow: 0 0 14px rgba(255, 255, 255, 0.55);
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0.25);
+    }
+}
+
+.clock-pulse {
+    animation: softPulse 0.65s ease-out;
+}
+
+/* ---------------- REDUCED MOTION ---------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .clock-pulse {
+        animation: none;
+    }
+
+    .clock-widget {
+        transition: none;
+    }
+}

@@ -1,31 +1,34 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import "../../css/clockWidget.css";
 
 export default function ClockWidget({ compact = false }) {
     const [time, setTime] = useState("");
     const [is24Hour, setIs24Hour] = useState(true);
     const [pulse, setPulse] = useState(false);
-    const [lastMinute, setLastMinute] = useState(null);
 
-    // Load saved format preference
+    const lastMinuteRef = useRef(null);
+
+    /* ---------------- LOAD FORMAT ---------------- */
+
     useEffect(() => {
         const saved = localStorage.getItem("clockFormat");
         if (saved) setIs24Hour(saved === "24");
     }, []);
 
-    // Update time
+    /* ---------------- CLOCK UPDATE ---------------- */
+
     useEffect(() => {
         const updateClock = () => {
             const now = new Date();
-            const currentMinute = now.getMinutes();
+            const minute = now.getMinutes();
 
             let hours = now.getHours();
-            let minutes = currentMinute.toString().padStart(2, "0");
             let suffix = "";
 
-            if (currentMinute !== lastMinute) {
-                setLastMinute(currentMinute);
+            if (minute !== lastMinuteRef.current) {
+                lastMinuteRef.current = minute;
                 setPulse(true);
-                setTimeout(() => setPulse(false), 900);
+                setTimeout(() => setPulse(false), 650);
             }
 
             if (!is24Hour) {
@@ -33,14 +36,28 @@ export default function ClockWidget({ compact = false }) {
                 hours = hours % 12 || 12;
             }
 
-            hours = hours.toString().padStart(2, "0");
-            setTime(`${hours}:${minutes}${suffix}`);
+            const formatted =
+                `${hours.toString().padStart(2, "0")}:` +
+                `${minute.toString().padStart(2, "0")}${suffix}`;
+
+            setTime(formatted);
         };
 
         updateClock();
-        const interval = setInterval(updateClock, 1000);
-        return () => clearInterval(interval);
-    }, [is24Hour, lastMinute]);
+
+        const now = new Date();
+        const delay = (60 - now.getSeconds()) * 1000;
+
+        const timeout = setTimeout(() => {
+            updateClock();
+            const interval = setInterval(updateClock, 60_000);
+            return () => clearInterval(interval);
+        }, delay);
+
+        return () => clearTimeout(timeout);
+    }, [is24Hour]);
+
+    /* ---------------- TOGGLE FORMAT ---------------- */
 
     const toggleFormat = () => {
         const next = !is24Hour;
@@ -48,21 +65,23 @@ export default function ClockWidget({ compact = false }) {
         localStorage.setItem("clockFormat", next ? "24" : "12");
     };
 
+    /* ---------------- UI ---------------- */
+
     return (
         <div
             onClick={toggleFormat}
-            title="Click to switch 12h / 24h format"
+            title="Toggle 12h / 24h format"
             className={`
-        rounded-xl backdrop-blur-xl bg-white/10
-        border border-white/10
-        shadow-[0_0_15px_rgba(0,0,0,0.25)]
-        text-white select-none cursor-pointer
-        transition-all hover:bg-white/20
+        clock-widget
         ${pulse ? "clock-pulse" : ""}
-        ${compact ? "px-4 py-2 text-base" : "px-5 py-3 text-xl"}
+        ${compact ? "clock-compact" : "clock-normal"}
       `}
         >
-            {time}
+            <span className="clock-time">{time}</span>
+
+            <span className="clock-format">
+                {is24Hour ? "24H" : "12H"}
+            </span>
         </div>
     );
 }

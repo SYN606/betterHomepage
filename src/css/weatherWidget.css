@@ -1,0 +1,17 @@
+@keyframes weatherGlow {
+    0% {
+        box-shadow: 0 0 0 rgba(0, 255, 224, 0.0);
+    }
+
+    50% {
+        box-shadow: 0 0 10px rgba(0, 255, 224, 0.25);
+    }
+
+    100% {
+        box-shadow: 0 0 0 rgba(0, 255, 224, 0.0);
+    }
+}
+
+.weather-glow {
+    animation: weatherGlow 1.2s ease-in-out forwards;
+}
