@@ -9,33 +9,41 @@ import {
     WiSnow,
     WiStormShowers,
 } from "react-icons/wi";
+import "../../css/weatherWidget.css";
 
 export default function WeatherWidget({ compact = false }) {
     const [weather, setWeather] = useState(null);
-    const [location, setLocation] = useState("New Delhi");
+    const [location, setLocation] = useState(null);
     const [coords, setCoords] = useState(null);
     const [showEditor, setShowEditor] = useState(false);
+    const [hovered, setHovered] = useState(false);
+    const [glow, setGlow] = useState(false);
 
     /* ---------------- ICON MAP ---------------- */
 
-    const iconSize = compact ? 22 : 32;
+    const iconSize = compact ? 26 : 36;
 
     const iconMap = {
-        0: <WiDaySunny size={iconSize} />,
-        1: <WiDaySunny size={iconSize} />,
-        2: <WiDayCloudy size={iconSize} />,
-        3: <WiCloudy size={iconSize} />,
-        45: <WiFog size={iconSize} />,
-        48: <WiFog size={iconSize} />,
-        51: <WiRain size={iconSize} />,
-        61: <WiRain size={iconSize} />,
-        63: <WiRain size={iconSize} />,
-        65: <WiRain size={iconSize} />,
-        71: <WiSnow size={iconSize} />,
-        80: <WiRain size={iconSize} />,
-        95: <WiStormShowers size={iconSize} />,
-        99: <WiStormShowers size={iconSize} />,
+        0: WiDaySunny,
+        1: WiDaySunny,
+        2: WiDayCloudy,
+        3: WiCloudy,
+        45: WiFog,
+        48: WiFog,
+        51: WiRain,
+        61: WiRain,
+        63: WiRain,
+        65: WiRain,
+        71: WiSnow,
+        80: WiRain,
+        95: WiStormShowers,
+        99: WiStormShowers,
     };
+
+    const Icon =
+        weather && iconMap[weather.code]
+            ? iconMap[weather.code]
+            : WiCloudy;
 
     /* ---------------- HELPERS ---------------- */
 
@@ -46,17 +54,34 @@ export default function WeatherWidget({ compact = false }) {
             .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
             .join(" ");
 
-    /* ---------------- LOAD SAVED LOCATION ---------------- */
+    /* ---------------- INITIAL LOCATION ---------------- */
 
     useEffect(() => {
         const saved = localStorage.getItem("weatherLocation");
         if (saved) {
             setLocation(saved);
             fetchCoordinates(saved);
+        } else {
+            fetchFromIP();
         }
     }, []);
 
-    /* ---------------- API CALLS ---------------- */
+    /* ---------------- GEO ---------------- */
+
+    const fetchFromIP = async () => {
+        try {
+            const res = await fetch("https://ipapi.co/json/");
+            const data = await res.json();
+            if (!data.city) return;
+
+            const city = formatName(data.city);
+            localStorage.setItem("weatherLocation", city);
+            setLocation(city);
+            fetchCoordinates(city);
+        } catch {
+            /* silent fail */
+        }
+    };
 
     const fetchCoordinates = async (city) => {
         try {
@@ -65,16 +90,15 @@ export default function WeatherWidget({ compact = false }) {
                     city
                 )}&count=1`
             );
-
             const data = await res.json();
             if (!data.results?.length) return;
 
             const { latitude, longitude } = data.results[0];
             setCoords({ latitude, longitude });
-        } catch (err) {
-            console.error("Geocoding error:", err);
-        }
+        } catch { }
     };
+
+    /* ---------------- WEATHER ---------------- */
 
     const fetchWeather = async () => {
         if (!coords) return;
@@ -83,24 +107,23 @@ export default function WeatherWidget({ compact = false }) {
             const res = await fetch(
                 `https://api.open-meteo.com/v1/forecast?latitude=${coords.latitude}&longitude=${coords.longitude}&current_weather=true`
             );
-
             const data = await res.json();
             if (!data.current_weather) return;
 
             setWeather({
                 temp: Math.round(data.current_weather.temperature),
+                wind: Math.round(data.current_weather.windspeed),
+                windDir: Math.round(data.current_weather.winddirection),
                 code: data.current_weather.weathercode,
             });
-        } catch (err) {
-            console.error("Weather error:", err);
-        }
-    };
 
-    /* ---------------- AUTO REFRESH WEATHER ---------------- */
+            setGlow(true);
+            setTimeout(() => setGlow(false), 1000);
+        } catch { }
+    };
 
     useEffect(() => {
         if (!coords) return;
-
         fetchWeather();
         const interval = setInterval(fetchWeather, 30 * 60 * 1000);
         return () => clearInterval(interval);
@@ -109,11 +132,11 @@ export default function WeatherWidget({ compact = false }) {
     /* ---------------- SAVE LOCATION ---------------- */
 
     const saveLocation = async () => {
-        if (!location.trim()) return;
+        if (!location?.trim()) return;
 
         const normalized = formatName(location);
-        setLocation(normalized);
         localStorage.setItem("weatherLocation", normalized);
+        setLocation(normalized);
 
         await fetchCoordinates(normalized);
         setShowEditor(false);
@@ -129,72 +152,124 @@ export default function WeatherWidget({ compact = false }) {
 
     /* ---------------- UI ---------------- */
 
-    const boxCls = `
-    flex items-center gap-3
-    text-white select-none
-    rounded-2xl backdrop-blur-xl bg-white/10
-    border border-white/15
-    shadow-[0_0_20px_rgba(0,0,0,0.25)]
-    transition cursor-pointer hover:bg-white/20
-    ${compact ? "px-4 py-2 text-base" : "px-5 py-3 text-lg"}
-  `;
-
     return (
         <>
-            {/* WEATHER DISPLAY */}
+            {/* WEATHER CARD */}
             <div
-                className={boxCls}
-                onClick={() => setShowEditor(true)}
-                title="Click to change city"
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEditor(true);
+                }}
+                className={`
+          relative
+          flex items-center gap-3
+          px-3 py-2
+          rounded-xl
+          backdrop-blur-xl
+          bg-white/6
+          border border-white/12
+          text-white
+          cursor-pointer
+          transition-all
+          hover:bg-white/12
+          ${glow ? "weather-glow" : ""}
+        `}
             >
-                {!weather ? (
-                    "Loading..."
-                ) : (
-                    <>
-                        {iconMap[weather.code] || <WiCloudy size={iconSize} />}
-                        <span>{weather.temp}°C</span>
-                        {!compact && (
-                            <span className="text-white/70">
-                                {formatName(location)}
-                            </span>
-                        )}
-                    </>
+                <Icon size={iconSize} className="opacity-90" />
+
+                <div className="flex flex-col leading-tight">
+                    <span className="text-base font-medium">
+                        {weather ? `${weather.temp}°C` : "—"}
+                    </span>
+
+                    {!compact && (
+                        <span className="text-[11px] text-white/60 tracking-wide">
+                            {location || "Detecting location"}
+                        </span>
+                    )}
+                </div>
+
+                {/* HOVER PANEL */}
+                {hovered && weather && (
+                    <div
+                        className="
+              absolute bottom-full right-0 mb-2
+              w-44
+              rounded-xl
+              bg-black/90 backdrop-blur-xl
+              border border-white/10
+              text-white/85
+              shadow-xl
+              z-30
+              animate-fadeIn
+            "
+                    >
+                        <div className="px-3 pt-2 pb-1 text-xs font-medium text-white">
+                            Weather
+                        </div>
+
+                        <div className="px-3 pb-2 space-y-1 text-[11px]">
+                            <div className="flex justify-between">
+                                <span className="text-white/60">Temp</span>
+                                <span>{weather.temp}°C</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="text-white/60">Wind</span>
+                                <span>{weather.wind} km/h</span>
+                            </div>
+
+                            <div className="flex justify-between">
+                                <span className="text-white/60">Direction</span>
+                                <span>{weather.windDir}°</span>
+                            </div>
+
+                            <div className="pt-1 text-white/40 text-[10px]">
+                                {location}
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
 
-            {/* MODAL (PORTAL) */}
+            {/* EDIT MODAL */}
             {showEditor &&
                 createPortal(
-                    <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/60 backdrop-blur-md">
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md"
+                        onClick={() => setShowEditor(false)}
+                    >
                         <div
                             className="
-                bg-[#0B0B0B]/85
-                backdrop-blur-2xl
+                bg-[#0B0B0B]/90
                 border border-white/10
-                rounded-3xl
+                rounded-2xl
                 p-6 w-80
                 text-white
                 shadow-[0_0_40px_rgba(0,0,0,0.6)]
-                animate-fadeIn
               "
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <h2 className="text-xl font-semibold mb-4">Set City</h2>
+                            <h2 className="text-base font-semibold mb-4">
+                                Set Weather Location
+                            </h2>
 
                             <input
                                 autoFocus
-                                value={location}
+                                value={location || ""}
                                 onChange={(e) => setLocation(e.target.value)}
                                 className="
                   w-full px-4 py-2 mb-4
-                  rounded-xl
+                  rounded-lg
                   bg-white/10 border border-white/20
-                  outline-none text-white
+                  outline-none
                 "
                                 placeholder="Enter city"
                             />
 
-                            <div className="flex justify-between">
+                            <div className="flex justify-end gap-3">
                                 <button
                                     onClick={() => setShowEditor(false)}
                                     className="text-white/60 hover:text-white"
@@ -204,11 +279,7 @@ export default function WeatherWidget({ compact = false }) {
 
                                 <button
                                     onClick={saveLocation}
-                                    className="
-                    px-4 py-2 rounded-xl
-                    bg-white/20 hover:bg-white/30
-                    transition
-                  "
+                                    className="px-4 py-2 rounded-lg bg-white/20 hover:bg-white/30"
                                 >
                                     Save
                                 </button>

@@ -6,7 +6,8 @@ export default function ClockWidget({ compact = false }) {
     const [is24Hour, setIs24Hour] = useState(true);
     const [pulse, setPulse] = useState(false);
 
-    const lastMinuteRef = useRef(null);
+    const minuteRef = useRef(null);
+    const intervalRef = useRef(null);
 
     /* ---------------- LOAD FORMAT ---------------- */
 
@@ -22,14 +23,14 @@ export default function ClockWidget({ compact = false }) {
             const now = new Date();
             const minute = now.getMinutes();
 
-            let hours = now.getHours();
-            let suffix = "";
-
-            if (minute !== lastMinuteRef.current) {
-                lastMinuteRef.current = minute;
+            if (minute !== minuteRef.current) {
+                minuteRef.current = minute;
                 setPulse(true);
                 setTimeout(() => setPulse(false), 650);
             }
+
+            let hours = now.getHours();
+            let suffix = "";
 
             if (!is24Hour) {
                 suffix = hours >= 12 ? " PM" : " AM";
@@ -43,18 +44,23 @@ export default function ClockWidget({ compact = false }) {
             setTime(formatted);
         };
 
+        // Initial render
         updateClock();
 
+        // Align to next minute
         const now = new Date();
-        const delay = (60 - now.getSeconds()) * 1000;
+        const msToNextMinute =
+            (60 - now.getSeconds()) * 1000 - now.getMilliseconds();
 
         const timeout = setTimeout(() => {
             updateClock();
-            const interval = setInterval(updateClock, 60_000);
-            return () => clearInterval(interval);
-        }, delay);
+            intervalRef.current = setInterval(updateClock, 60_000);
+        }, msToNextMinute);
 
-        return () => clearTimeout(timeout);
+        return () => {
+            clearTimeout(timeout);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
     }, [is24Hour]);
 
     /* ---------------- TOGGLE FORMAT ---------------- */
@@ -69,19 +75,20 @@ export default function ClockWidget({ compact = false }) {
 
     return (
         <div
+            role="button"
+            tabIndex={0}
             onClick={toggleFormat}
-            title="Toggle 12h / 24h format"
+            onKeyDown={(e) =>
+                (e.key === "Enter" || e.key === " ") && toggleFormat()
+            }
+            title="Toggle time format"
             className={`
-        clock-widget
-        ${pulse ? "clock-pulse" : ""}
-        ${compact ? "clock-compact" : "clock-normal"}
-      `}
+                clock-widget
+                ${pulse ? "clock-pulse" : ""}
+                ${compact ? "clock-compact" : "clock-normal"}
+            `}
         >
             <span className="clock-time">{time}</span>
-
-            <span className="clock-format">
-                {is24Hour ? "24H" : "12H"}
-            </span>
         </div>
     );
 }

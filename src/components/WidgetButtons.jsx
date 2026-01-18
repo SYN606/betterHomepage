@@ -26,7 +26,7 @@ export default function WidgetButtons() {
     useEffect(() => {
         const triggerPulse = () => {
             setPulse(true);
-            setTimeout(() => setPulse(false), 1600);
+            setTimeout(() => setPulse(false), 1000);
         };
 
         const now = new Date();
@@ -45,21 +45,21 @@ export default function WidgetButtons() {
 
     return (
         <div
-            className={`
+            className="
         absolute bottom-6 right-6 z-20
-        flex items-center gap-4
-        px-5 py-3
-        rounded-2xl
+        flex flex-col items-center
+        gap-2
+        px-3 py-3
+        rounded-xl
         backdrop-blur-xl
-        bg-black/40
+        bg-black/45
         border border-white/10
-        shadow-[0_10px_30px_rgba(0,0,0,0.45)]
-        transition-all
-      `}
+        shadow-[0_8px_24px_rgba(0,0,0,0.45)]
+      "
         >
             {/* WEATHER */}
             {showWeather && (
-                <div className="opacity-90">
+                <div className="w-[150px] flex justify-center">
                     <WeatherWidget compact />
                 </div>
             )}
@@ -68,28 +68,22 @@ export default function WidgetButtons() {
             {showWeather && showClock && (
                 <div
                     className={`
-            w-px h-7
-            transition-all
-            ${pulse ? "bg-white/40" : "bg-white/15"}
+            w-full h-px
+            transition-colors
+            ${pulse ? "bg-white/35" : "bg-white/15"}
           `}
                 />
             )}
 
             {/* CLOCK */}
             {showClock && (
-                <div
-                    className={`
-            rounded-xl px-1
-            transition
-            ${pulse ? "ring-1 ring-white/30 bg-white/5" : ""}
-          `}
-                >
+                <div className="w-[150px] flex justify-center">
                     <ClockWidget compact />
                 </div>
             )}
 
             {/* CONTROLS */}
-            <div className="flex items-center gap-2 ml-1">
+            <div className="grid grid-cols-2 gap-2 mt-1">
                 {/* Clock toggle */}
                 <button
                     onClick={() => {
@@ -100,9 +94,9 @@ export default function WidgetButtons() {
                     aria-pressed={showClock}
                     title="Toggle Clock"
                     className={`
-            w-7 h-7
+            w-8 h-8
             flex items-center justify-center
-            rounded-lg
+            rounded-md
             text-white/70
             transition
             ${showClock ? "bg-white/15" : "bg-white/5"}
@@ -123,9 +117,9 @@ export default function WidgetButtons() {
                     aria-pressed={showWeather}
                     title="Toggle Weather"
                     className={`
-            w-7 h-7
+            w-8 h-8
             flex items-center justify-center
-            rounded-lg
+            rounded-md
             text-white/70
             transition
             ${showWeather ? "bg-white/15" : "bg-white/5"}
