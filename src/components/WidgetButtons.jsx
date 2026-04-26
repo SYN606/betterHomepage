@@ -1,135 +1,136 @@
-import { useState, useEffect } from "react";
-import { ClockWidget, WeatherWidget } from "./widgets";
-import { FiClock, FiCloud } from "react-icons/fi";
+import { useEffect, useRef, useState } from "react";
+import {
+    FiChevronUp,
+    FiCloud,
+    FiGrid,
+} from "react-icons/fi";
+import { WeatherWidget } from "./widgets";
+
+const DEFAULT_WIDGETS = {
+    weather: true,
+};
 
 export default function WidgetButtons() {
-    const [showClock, setShowClock] = useState(true);
-    const [showWeather, setShowWeather] = useState(true);
+    const [showPanel, setShowPanel] = useState(true);
+    const [widgets, setWidgets] = useState(DEFAULT_WIDGETS);
     const [pulse, setPulse] = useState(false);
-
-    /* ---------------- LOAD SAVED STATES ---------------- */
+    const intervalRef = useRef(null);
+    const timeoutRef = useRef(null);
 
     useEffect(() => {
-        const savedClock = localStorage.getItem("showClock");
-        const savedWeather = localStorage.getItem("showWeather");
+        const saved = localStorage.getItem("widgetVisibility");
 
-        if (savedClock !== null) setShowClock(savedClock === "true");
-        if (savedWeather !== null) setShowWeather(savedWeather === "true");
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setWidgets({
+                    weather: parsed.weather ?? true,
+                });
+            } catch {
+                setWidgets(DEFAULT_WIDGETS);
+            }
+        }
     }, []);
 
-    const saveState = (key, value) => {
-        localStorage.setItem(key, value.toString());
-    };
-
-    /* ---------------- MINUTE-ALIGNED PULSE ---------------- */
+    useEffect(() => {
+        localStorage.setItem("widgetVisibility", JSON.stringify(widgets));
+    }, [widgets]);
 
     useEffect(() => {
         const triggerPulse = () => {
             setPulse(true);
-            setTimeout(() => setPulse(false), 1000);
+
+            setTimeout(() => {
+                setPulse(false);
+            }, 900);
         };
 
         const now = new Date();
         const delay = (60 - now.getSeconds()) * 1000;
 
-        const timeout = setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
             triggerPulse();
-            const interval = setInterval(triggerPulse, 60000);
-            return () => clearInterval(interval);
+            intervalRef.current = setInterval(triggerPulse, 60000);
         }, delay);
 
-        return () => clearTimeout(timeout);
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
     }, []);
 
-    /* ---------------- UI ---------------- */
+    const toggleWidget = () => {
+        setWidgets((prev) => ({
+            ...prev,
+            weather: !prev.weather,
+        }));
+    };
 
     return (
-        <div
-            className="
-        absolute bottom-6 right-6 z-20
-        flex flex-col items-center
-        gap-2
-        px-3 py-3
-        rounded-xl
-        backdrop-blur-xl
-        bg-black/45
-        border border-white/10
-        shadow-[0_8px_24px_rgba(0,0,0,0.45)]
-      "
-        >
-            {/* WEATHER */}
-            {showWeather && (
-                <div className="w-[150px] flex justify-center">
-                    <WeatherWidget compact />
+        <div className="absolute bottom-6 right-6 z-30 flex flex-col items-end gap-3">
+            {showPanel && (
+                <div className="w-[220px] rounded-3xl border border-white/10 bg-black/45 p-4 text-white shadow-2xl backdrop-blur-2xl">
+                    <div className="mb-4 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.2em] text-white/50">
+                                Widget Hub
+                            </p>
+                            <h3 className="text-sm font-medium text-white/90">
+                                Quick Controls
+                            </h3>
+                        </div>
+
+                        <button
+                            onClick={() => setShowPanel(false)}
+                            className="rounded-xl bg-white/5 p-2 text-white/70 transition hover:bg-white/10 hover:text-white"
+                            title="Collapse"
+                        >
+                            <FiChevronUp size={16} />
+                        </button>
+                    </div>
+
+                    {widgets.weather ? (
+                        <div className="space-y-3">
+                            <div className="rounded-2xl border border-white/5 bg-white/5 p-3">
+                                <WeatherWidget compact />
+                            </div>
+
+                            <div
+                                className={`h-px w-full transition-all duration-500 ${pulse ? "bg-white/30" : "bg-white/10"
+                                    }`}
+                            />
+                        </div>
+                    ) : (
+                        <div className="rounded-2xl border border-white/5 bg-white/5 p-4 text-center text-sm text-white/60">
+                            No widgets enabled
+                        </div>
+                    )}
+
+                    <div className="mt-4 grid grid-cols-1 gap-2">
+                        <button
+                            onClick={toggleWidget}
+                            className={`flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm transition ${widgets.weather
+                                    ? "bg-white/15 text-white"
+                                    : "bg-white/5 text-white/60"
+                                } hover:bg-white/20`}
+                            title="Toggle Weather"
+                        >
+                            <FiCloud size={15} />
+                            Weather
+                        </button>
+                    </div>
                 </div>
             )}
 
-            {/* DIVIDER */}
-            {showWeather && showClock && (
-                <div
-                    className={`
-            w-full h-px
-            transition-colors
-            ${pulse ? "bg-white/35" : "bg-white/15"}
-          `}
-                />
-            )}
-
-            {/* CLOCK */}
-            {showClock && (
-                <div className="w-[150px] flex justify-center">
-                    <ClockWidget compact />
-                </div>
-            )}
-
-            {/* CONTROLS */}
-            <div className="grid grid-cols-2 gap-2 mt-1">
-                {/* Clock toggle */}
+            {!showPanel && (
                 <button
-                    onClick={() => {
-                        const val = !showClock;
-                        setShowClock(val);
-                        saveState("showClock", val);
-                    }}
-                    aria-pressed={showClock}
-                    title="Toggle Clock"
-                    className={`
-            w-8 h-8
-            flex items-center justify-center
-            rounded-md
-            text-white/70
-            transition
-            ${showClock ? "bg-white/15" : "bg-white/5"}
-            hover:bg-white/20 hover:text-white
-            active:scale-95
-          `}
+                    onClick={() => setShowPanel(true)}
+                    className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-black/45 text-white shadow-xl backdrop-blur-xl transition hover:scale-105 hover:bg-black/55"
+                    title="Open Widget Hub"
                 >
-                    <FiClock size={14} />
+                    <FiGrid size={20} />
                 </button>
-
-                {/* Weather toggle */}
-                <button
-                    onClick={() => {
-                        const val = !showWeather;
-                        setShowWeather(val);
-                        saveState("showWeather", val);
-                    }}
-                    aria-pressed={showWeather}
-                    title="Toggle Weather"
-                    className={`
-            w-8 h-8
-            flex items-center justify-center
-            rounded-md
-            text-white/70
-            transition
-            ${showWeather ? "bg-white/15" : "bg-white/5"}
-            hover:bg-white/20 hover:text-white
-            active:scale-95
-          `}
-                >
-                    <FiCloud size={14} />
-                </button>
-            </div>
+            )}
         </div>
     );
 }

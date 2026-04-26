@@ -6,8 +6,7 @@ import {
   PinnedShortcuts,
   OnboardingModal,
   BackgroundManager,
-  TodoHamburger,
-  GoogleServices
+  GoogleServices,
 } from "./components";
 
 export default function App() {
@@ -26,42 +25,29 @@ export default function App() {
   };
 
   return (
-    <div
-      className="
-        w-full h-screen
-        relative
-        overflow-hidden
-        flex items-center justify-center
-      "
-    >
-      {/* Background */}
+    <main className="relative min-h-screen w-full overflow-hidden bg-bg text-text">
       <BackgroundManager />
 
-      {/* First-run onboarding */}
       {showOnboarding && (
         <OnboardingModal onClose={closeOnboarding} />
       )}
 
-      {/* Left pinned shortcuts */}
       <PinnedShortcuts />
 
-      {/* Top-right Todo */}
-      {/* Top-right utilities */}
-      <div
-        className="absolute top-6 right-6 z-30 flex items-center gap-3">
+      <div className="absolute top-6 right-6 z-20">
         <GoogleServices />
-        <TodoHamburger />
       </div>
 
+      <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6">
+        <div className="w-full max-w-3xl space-y-6 text-center">
+          <HeroTitle />
+          <SearchBar />
+        </div>
+      </section>
 
-      {/* Center content */}
-      <div className="flex flex-col gap-6 z-10 w-full">
-        <HeroTitle />
-        <SearchBar />
+      <div className="absolute bottom-6 right-6 z-20">
+        <WidgetButtons />
       </div>
-
-      {/* Bottom-right widgets */}
-      <WidgetButtons />
-    </div>
+    </main>
   );
 }

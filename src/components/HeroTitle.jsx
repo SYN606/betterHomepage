@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const GREETINGS = {
     morning: [
@@ -10,9 +10,8 @@ const GREETINGS = {
         "Time to get started",
         "Another day ahead",
         "Early focus",
-        "Slow and steady"
+        "Slow and steady",
     ],
-
     afternoon: [
         "Good Afternoon",
         "Stay focused",
@@ -22,9 +21,8 @@ const GREETINGS = {
         "Still time left",
         "Focused hours",
         "Keep the flow",
-        "On track"
+        "On track",
     ],
-
     evening: [
         "Good Evening",
         "Time to slow down",
@@ -34,9 +32,8 @@ const GREETINGS = {
         "Gentle pace",
         "End of the day",
         "Take it easy",
-        "Soft focus"
+        "Soft focus",
     ],
-
     night: [
         "Quiet hours",
         "Focus mode",
@@ -46,16 +43,15 @@ const GREETINGS = {
         "Night focus",
         "Still here",
         "Silent time",
-        "After hours"
-    ]
+        "After hours",
+    ],
 };
-
 
 const FONT_BY_PERIOD = {
     morning: "font-[Poppins]",
     afternoon: "font-[Inter]",
     evening: "font-[Playfair_Display]",
-    night: "font-[JetBrains_Mono]"
+    night: "font-[Inter]",
 };
 
 export default function HeroTitle() {
@@ -63,34 +59,30 @@ export default function HeroTitle() {
     const [editing, setEditing] = useState(false);
     const [greeting, setGreeting] = useState("");
     const [period, setPeriod] = useState("morning");
+    const [time, setTime] = useState("");
 
-    // Helpers
-    const getPeriod = () => {
-        const h = new Date().getHours();
-        if (h >= 5 && h < 12) return "morning";
-        if (h >= 12 && h < 17) return "afternoon";
-        if (h >= 17 && h < 21) return "evening";
+    function getPeriod() {
+        const hour = new Date().getHours();
+
+        if (hour >= 5 && hour < 12) return "morning";
+        if (hour >= 12 && hour < 17) return "afternoon";
+        if (hour >= 17 && hour < 21) return "evening";
+
         return "night";
-    };
+    }
 
-    const todayKey = () => new Date().toISOString().slice(0, 10);
+    function todayKey() {
+        return new Date().toISOString().slice(0, 10);
+    }
 
-    // Init
-    useEffect(() => {
-        const savedName = localStorage.getItem("heroName");
-        if (savedName) setName(savedName);
+    function getFormattedTime() {
+        return new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
 
-        updateGreeting(true);
-
-        const interval = setInterval(() => {
-            updateGreeting(false);
-        }, 60 * 1000);
-
-        return () => clearInterval(interval);
-    }, []);
-
-    // Stable greeting logic
-    const updateGreeting = (force = false) => {
+    function updateGreeting(force = false) {
         const currentPeriod = getPeriod();
         const storageKey = `hero-greeting-${todayKey()}-${currentPeriod}`;
 
@@ -106,17 +98,45 @@ export default function HeroTitle() {
 
         setGreeting(selected);
         setPeriod(currentPeriod);
-    };
+    }
 
-    // Save name
-    const saveName = (val) => {
-        setName(val);
-        localStorage.setItem("heroName", val);
-    };
+    function saveName(value) {
+        setName(value);
+        localStorage.setItem("heroName", value);
+    }
 
-    // UI
+    useEffect(() => {
+        const savedName = localStorage.getItem("heroName");
+
+        if (savedName) {
+            setName(savedName);
+        }
+
+        setTime(getFormattedTime());
+        updateGreeting(true);
+
+        const clockInterval = setInterval(() => {
+            setTime(getFormattedTime());
+        }, 1000);
+
+        const greetingInterval = setInterval(() => {
+            updateGreeting(false);
+        }, 15 * 60 * 1000);
+
+        return () => {
+            clearInterval(clockInterval);
+            clearInterval(greetingInterval);
+        };
+    }, []);
+
+    const displayName = name?.trim() ? name : "Friend";
+
     return (
-        <div className="flex justify-center mt-14 w-full">
+        <section className="flex w-full flex-col items-center justify-center gap-4 px-4 text-center">
+            <div className="text-base md:text-lg font-medium tracking-[0.18em] text-white/85 uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+                {time}
+            </div>
+
             {editing ? (
                 <input
                     autoFocus
@@ -124,44 +144,62 @@ export default function HeroTitle() {
                     placeholder="Your name"
                     onChange={(e) => saveName(e.target.value)}
                     onBlur={() => setEditing(false)}
-                    onKeyDown={(e) =>
-                        (e.key === "Enter" || e.key === "Escape") &&
-                        setEditing(false)
-                    }
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === "Escape") {
+                            setEditing(false);
+                        }
+                    }}
                     className={`
-                        px-10 py-4
-                        rounded-3xl
-                        text-white text-4xl font-semibold text-center
-                        bg-black/20 backdrop-blur-xl
-                        border border-white/10
-                        outline-none
-                        shadow-[0_8px_32px_rgba(0,0,0,0.35)]
-                        min-w-[250px] max-w-[90%]
-                        ${FONT_BY_PERIOD[period]}
-                    `}
+            w-full max-w-[700px]
+            rounded-3xl
+            border border-white/10
+            bg-black/30
+            px-8 py-4
+            text-center
+            text-2xl md:text-4xl
+            font-semibold
+            text-white
+            placeholder:text-white/40
+            backdrop-blur-2xl
+            outline-none
+            shadow-[0_8px_32px_rgba(0,0,0,0.35)]
+            transition-all
+            focus:bg-black/35
+            focus:border-white/20
+            ${FONT_BY_PERIOD[period]}
+          `}
                 />
             ) : (
                 <div
                     onClick={() => setEditing(true)}
                     title="Click to set your name"
                     className={`
-                        px-10 py-4
-                        rounded-3xl
-                        text-white text-4xl font-semibold text-center
-                        bg-black/20 backdrop-blur-xl
-                        border border-white/10
-                        shadow-[0_8px_32px_rgba(0,0,0,0.35)]
-                        cursor-text select-none
-                        transition-all
-                        hover:bg-black/30 hover:scale-[1.02]
-                        animate-fadeIn
-                        min-w-[250px] max-w-[90%]
-                        ${FONT_BY_PERIOD[period]}
-                    `}
+            w-full max-w-[700px]
+            cursor-text
+            select-none
+            rounded-3xl
+            border border-white/10
+            bg-black/30
+            px-8 py-4
+            text-center
+            text-2xl md:text-4xl
+            font-semibold
+            text-white
+            backdrop-blur-2xl
+            shadow-[0_8px_32px_rgba(0,0,0,0.35)]
+            transition-all duration-300
+            hover:scale-[1.01]
+            hover:bg-black/35
+            ${FONT_BY_PERIOD[period]}
+          `}
                 >
-                    {name ? `${greeting}, ${name}` : greeting}
+                    {`${greeting}, ${displayName}`}
                 </div>
             )}
-        </div>
+
+            <p className="max-w-2xl text-sm md:text-base text-white/75 leading-relaxed">
+                Stay focused. Small progress still moves you forward.
+            </p>
+        </section>
     );
 }
