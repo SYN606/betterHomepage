@@ -1,39 +1,103 @@
-import { useState, useEffect, useCallback } from "react";
-import { SEARCH_ENGINES, ENGINE_KEYS } from "./searchEngines";
+import { useEffect, useMemo, useState } from "react";
+import {
+    SEARCH_ENGINES,
+    ENGINE_KEYS,
+    FAVORITE_ENGINES,
+    ENGINE_CATEGORIES,
+} from "./searchEngines";
 
 export default function useSearchEngine(defaultKey = "google") {
-    const [engineKey, setEngineKey] = useState(defaultKey);
+    const getSafeDefault = () => {
+        if (SEARCH_ENGINES[defaultKey]) return defaultKey;
+        return "google";
+    };
 
-    /* Load saved engine */
+    const [engineKey, setEngineKey] = useState(getSafeDefault());
+    const [recentEngines, setRecentEngines] = useState([]);
+
     useEffect(() => {
-        const saved = localStorage.getItem("searchEngineKey");
-        if (saved && SEARCH_ENGINES[saved]) {
-            setEngineKey(saved);
+        try {
+            const savedEngine = localStorage.getItem("searchEngineKey");
+            const savedRecent = localStorage.getItem("recentSearchEngines");
+
+            if (savedEngine && SEARCH_ENGINES[savedEngine]) {
+                setEngineKey(savedEngine);
+            }
+
+            if (savedRecent) {
+                const parsed = JSON.parse(savedRecent);
+                if (Array.isArray(parsed)) {
+                    setRecentEngines(
+                        parsed.filter((key) => SEARCH_ENGINES[key])
+                    );
+                }
+            }
+        } catch {
+            setEngineKey(getSafeDefault());
+            setRecentEngines([]);
         }
     }, []);
 
-    /* Persist engine */
     useEffect(() => {
-        localStorage.setItem("searchEngineKey", engineKey);
+        try {
+            localStorage.setItem("searchEngineKey", engineKey);
+
+            const updatedRecent = [
+                engineKey,
+                ...recentEngines.filter((key) => key !== engineKey),
+            ].slice(0, 5);
+
+            setRecentEngines(updatedRecent);
+
+            localStorage.setItem(
+                "recentSearchEngines",
+                JSON.stringify(updatedRecent)
+            );
+        } catch {
+            // silent fallback for extension safety
+        }
     }, [engineKey]);
 
-    /* Cycle engines (Ctrl + ↑ / ↓) */
-    const cycleEngine = useCallback((direction) => {
-        const idx = ENGINE_KEYS.indexOf(engineKey);
-        if (idx === -1) return;
+    const resetToDefault = () => {
+        setEngineKey(getSafeDefault());
+    };
 
-        const next =
-            direction === "up"
-                ? (idx - 1 + ENGINE_KEYS.length) % ENGINE_KEYS.length
-                : (idx + 1) % ENGINE_KEYS.length;
+    const favoriteEngines = useMemo(() => {
+        return FAVORITE_ENGINES.map((key) => ({
+            key,
+            ...SEARCH_ENGINES[key],
+        }));
+    }, []);
 
-        setEngineKey(ENGINE_KEYS[next]);
-    }, [engineKey]);
+    const allEngines = useMemo(() => {
+        return ENGINE_KEYS.map((key) => ({
+            key,
+            ...SEARCH_ENGINES[key],
+        }));
+    }, []);
+
+    const categorizedEngines = useMemo(() => {
+        return ENGINE_CATEGORIES.map((category) => ({
+            category,
+            engines: ENGINE_KEYS.filter(
+                (key) => SEARCH_ENGINES[key].category === category
+            ).map((key) => ({
+                key,
+                ...SEARCH_ENGINES[key],
+            })),
+        })).filter((group) => group.engines.length > 0);
+    }, []);
 
     return {
         engineKey,
         setEngineKey,
         engine: SEARCH_ENGINES[engineKey],
-        cycleEngine
+
+        allEngines,
+        favoriteEngines,
+        categorizedEngines,
+        recentEngines,
+
+        resetToDefault,
     };
 }
