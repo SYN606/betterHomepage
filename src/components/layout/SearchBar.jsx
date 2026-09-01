@@ -227,7 +227,7 @@ export default function SearchBar() {
             style={{
               borderColor: "var(--glass-border)",
             }}
-            className="rounded-full border-[0.5px] bg-white/[0.02] px-3 py-1 text-xs font-medium text-text-muted transition hover:border-white/20 hover:bg-white/10 hover:text-text-primary cursor-pointer"
+            className="rounded-full border-[0.5px] bg-white/2 py-1 text-xs font-medium text-text-muted transition hover:border-white/20 hover:bg-white/10 hover:text-text-primary cursor-pointer"
           >
             {item}
           </button>
@@ -266,7 +266,7 @@ export default function SearchBar() {
                     style={{
                       borderColor: "var(--glass-border)",
                     }}
-                    className="rounded-xl border-[0.5px] bg-white/[0.03] px-3 py-1.5 text-xs text-text-secondary transition hover:border-white/20 hover:bg-white/10 hover:text-text-primary cursor-pointer text-left truncate"
+                    className="rounded-xl border-[0.5px] bg-white/3 px-3 py-1.5 text-xs text-text-secondary transition hover:border-white/20 hover:bg-white/10 hover:text-text-primary cursor-pointer text-left truncate"
                   >
                     {dork.label}
                   </button>
