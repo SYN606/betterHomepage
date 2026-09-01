@@ -5,18 +5,19 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
-  // IMPORTANT for Firefox extensions
+  // Important for extension relative paths
   base: "./",
 
   build: {
     outDir: "extension",
     emptyOutDir: true,
-
+    modulePreload: false,
+    assetsInlineLimit: 0,
     rollupOptions: {
       output: {
-        entryFileNames: "assets/[name].js",
-        chunkFileNames: "assets/[name].js",
-        assetFileNames: "assets/[name].[ext]",
+        entryFileNames: "assets/[name]-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
+        assetFileNames: "assets/[name]-[hash].[ext]",
       },
     },
   },

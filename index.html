@@ -13,15 +13,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
   <link rel="manifest" href="/favicon_io/site.webmanifest">
 
-  <!-- Prevent theme flicker before React hydrates -->
-  <script>
-    (function () {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme && savedTheme !== "default") {
-        document.documentElement.setAttribute("data-theme", savedTheme);
-      }
-    })();
-  </script>
+  <!-- Externalized Theme Init -->
+  <script type="module" src="/src/theme-init.js"></script>
 </head>
 
 <body class="overflow-hidden">
