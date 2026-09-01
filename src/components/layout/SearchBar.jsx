@@ -49,6 +49,7 @@ export default function SearchBar() {
 
   const inputRef = useRef(null);
   const menuRef = useRef(null);
+  const engineBtnRef = useRef(null);
 
   const { engineKey, setEngineKey, engine, allEngines } =
     useSearchEngine("duckduckgo");
@@ -63,7 +64,12 @@ export default function SearchBar() {
     if (!menuOpen) return;
 
     const handleOutsideClick = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        engineBtnRef.current &&
+        !engineBtnRef.current.contains(event.target)
+      ) {
         setMenuOpen(false);
       }
     };
@@ -127,63 +133,70 @@ export default function SearchBar() {
 
   return (
     <section className="mt-4 flex w-full flex-col items-center gap-4 px-4">
-      {/* Floating Glass Search Box */}
-      <div
-        style={{
-          backgroundColor: "rgba(255, 255, 255, 0.03)",
-          borderColor: "var(--glass-border)",
-          backdropFilter: "var(--glass-blur)",
-          boxShadow: "var(--shadow-glass)",
-        }}
-        className={`
-          relative flex w-full max-w-3xl items-center gap-3.5
-          rounded-full border-[0.5px] px-4 py-2.5
-          transition-all duration-300
-          focus-within:border-white/30 focus-within:bg-white/5
-          ${shake ? "animate-shake" : ""}
-        `}
-      >
-        {/* Engine Switcher Button */}
-        <button
-          onClick={() => setMenuOpen((prev) => !prev)}
-          title={engine?.name || "Search Engine"}
-          className="flex h-9 items-center gap-2 rounded-full border-[0.5px] border-transparent bg-white/5 px-3.5 text-xs font-semibold text-text-primary transition hover:border-white/20 hover:bg-white/10 cursor-pointer"
-        >
-          <Icon className="text-base" style={{ color }} />
-          <FiChevronDown className="text-text-muted" size={13} />
-        </button>
-
-        <FiSearch className="text-base text-text-muted" />
-
-        <input
-          ref={inputRef}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") run();
-            if (e.key === "Escape") setMenuOpen(false);
+      {/* Search Input Container & Dropdown Wrapper */}
+      <div className="relative flex w-full max-w-3xl flex-col items-center">
+        {/* Floating Transparent Glass Search Box */}
+        <div
+          style={{
+            backgroundColor: "rgba(255, 255, 255, 0.015)",
+            boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.2)",
           }}
-          placeholder="Search the web, YouTube, Docs, or commands…"
-          className="w-full bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted md:text-base font-normal"
-        />
+          className={`
+            flex w-full items-center gap-3.5
+            rounded-full border border-white/10 px-4 py-2.5
+            backdrop-blur-md transition-all duration-300
+            focus-within:border-white/25 focus-within:bg-white/3s-within:shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]
+            ${shake ? "animate-shake" : ""}
+          `}
+        >
+          {/* Engine Switcher Button */}
+          <button
+            ref={engineBtnRef}
+            onClick={() => setMenuOpen((prev) => !prev)}
+            title={engine?.name || "Search Engine"}
+            className="flex h-9 shrink-0 items-center gap-2 rounded-full border border-white/5 bg-white/4 px-3.5 text-xs font-semibold text-text-primary backdrop-blur-sm transition hover:border-white/15 hover:bg-white/8 cursor-pointer"
+          >
+            <Icon className="text-base" style={{ color }} />
+            <FiChevronDown
+              className="text-text-muted transition-transform duration-200"
+              size={13}
+              style={{ transform: menuOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+            />
+          </button>
 
-        {/* Engine Selector Dropdown */}
+          <FiSearch className="text-base text-text-muted shrink-0 opacity-70" />
+
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") run();
+              if (e.key === "Escape") setMenuOpen(false);
+            }}
+            placeholder="Search the web, YouTube, Docs, or commands…"
+            className="flex-1 min-w-0 bg-transparent text-sm text-text-primary outline-none placeholder:text-text-muted/60 md:text-base font-normal"
+          />
+        </div>
+
+        {/* Engine Selector Dropdown - Positioned Absolutely Below Main Container */}
         {menuOpen && (
           <div
             ref={menuRef}
             style={{
-              backgroundColor: "rgba(10, 14, 22, 0.75)",
-              borderColor: "var(--glass-border)",
-              backdropFilter: "var(--glass-blur)",
-              boxShadow: "var(--shadow-glass)",
+              backgroundColor: "rgba(15, 20, 32, 0.75)",
+              boxShadow:
+                "0 12px 40px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.1)",
             }}
-            className="absolute left-1/2 top-14 z-40 max-h-96 w-80 -translate-x-1/2 overflow-y-auto overflow-x-hidden rounded-3xl border-[0.5px] p-2 backdrop-blur-2xl transition-all [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+            className="absolute left-0 top-[calc(100%+0.5rem)] z-50 max-h-80 w-80 overflow-y-auto overflow-x-hidden rounded-3xl border border-white/10 p-2 backdrop-blur-2xl transition-all [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
           >
             {allEngines.map((item) => {
               const meta = ENGINE_ICONS[item.key] || {
                 Icon: FiSearch,
                 color: "#ffffff",
               };
+
+              const isSelected = engineKey === item.key;
 
               return (
                 <button
@@ -193,21 +206,30 @@ export default function SearchBar() {
                     setMenuOpen(false);
                   }}
                   className={`
-                    flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left transition cursor-pointer
-                    ${engineKey === item.key
-                      ? "bg-white/10 text-text-primary"
-                      : "text-text-secondary hover:bg-white/5 hover:text-text-primary"
+                    flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-left transition cursor-pointer border
+                    ${isSelected
+                      ? "border-white/15 bg-white/10 text-text-primary shadow-sm"
+                      : "border-transparent text-text-secondary hover:border-white/5 hover:bg-white/4 hover:text-text-primary"
                     }
                   `}
                 >
-                  <meta.Icon
-                    className="text-base"
-                    style={{ color: meta.color }}
-                  />
+                  <div
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-white/5 border border-white/5"
+                    style={{
+                      borderColor: isSelected ? `${meta.color}40` : undefined,
+                    }}
+                  >
+                    <meta.Icon
+                      className="text-base"
+                      style={{ color: meta.color }}
+                    />
+                  </div>
 
-                  <div className="flex flex-col">
-                    <span className="text-xs font-semibold">{item.name}</span>
-                    <span className="text-[10px] text-text-muted">
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold leading-tight truncate">
+                      {item.name}
+                    </span>
+                    <span className="text-[10px] text-text-muted/80 leading-tight truncate">
                       {item.description}
                     </span>
                   </div>
@@ -224,10 +246,7 @@ export default function SearchBar() {
           <button
             key={item}
             onClick={() => run(item)}
-            style={{
-              borderColor: "var(--glass-border)",
-            }}
-            className="rounded-full border-[0.5px] bg-white/2 py-1 text-xs font-medium text-text-muted transition hover:border-white/20 hover:bg-white/10 hover:text-text-primary cursor-pointer"
+            className="rounded-full border border-white/5 bg-white/1.5 px-3.5 py-1 text-xs font-medium text-text-muted backdrop-blur-sm transition hover:border-white/15 hover:bg-white/6 hover:text-text-primary cursor-pointer"
           >
             {item}
           </button>
@@ -237,7 +256,7 @@ export default function SearchBar() {
       {/* Toggle Advanced Search */}
       <button
         onClick={() => setShowDorks((prev) => !prev)}
-        className="text-xs font-medium text-text-muted transition hover:text-text-primary cursor-pointer"
+        className="text-xs font-medium text-text-muted/80 transition hover:text-text-primary cursor-pointer mt-1"
       >
         {showDorks ? "Hide Advanced Search ▲" : "Advanced Search ▼"}
       </button>
@@ -246,15 +265,15 @@ export default function SearchBar() {
       {showDorks && (
         <div
           style={{
-            backgroundColor: "rgba(10, 14, 22, 0.5)",
-            borderColor: "var(--glass-border)",
-            backdropFilter: "var(--glass-blur)",
+            backgroundColor: "rgba(15, 20, 32, 0.45)",
+            boxShadow:
+              "0 8px 32px 0 rgba(0, 0, 0, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.05)",
           }}
-          className="flex w-full max-w-3xl flex-col gap-4 max-h-96 overflow-y-auto overflow-x-hidden rounded-3xl border-[0.5px] p-4 text-left transition-all [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="flex w-full max-w-3xl flex-col gap-4 max-h-96 overflow-y-auto overflow-x-hidden rounded-3xl border border-white/10 p-4 text-left backdrop-blur-xl transition-all [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
           {DORK_CATEGORIES.map((category) => (
             <div key={category.title} className="space-y-2">
-              <h3 className="text-xs font-semibold text-text-secondary">
+              <h3 className="text-xs font-semibold text-text-secondary/90 tracking-wide uppercase text-[10px]">
                 {category.title}
               </h3>
 
@@ -263,10 +282,7 @@ export default function SearchBar() {
                   <button
                     key={dork.label}
                     onClick={() => insertDork(dork.value)}
-                    style={{
-                      borderColor: "var(--glass-border)",
-                    }}
-                    className="rounded-xl border-[0.5px] bg-white/3 px-3 py-1.5 text-xs text-text-secondary transition hover:border-white/20 hover:bg-white/10 hover:text-text-primary cursor-pointer text-left truncate"
+                    className="rounded-xl border border-white/5 bg-white/2 px-3 py-1.5 text-xs text-text-secondary transition hover:border-white/15 hover:bg-white/[0.07] hover:text-text-primary cursor-pointer text-left truncate backdrop-blur-sm"
                   >
                     {dork.label}
                   </button>

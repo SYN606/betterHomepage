@@ -7,9 +7,9 @@ A sleek, hyper-minimalist Firefox & Chrome custom new tab replacement focused on
 ![Vite](https://img.shields.io/badge/Vite-Build_Tool-646CFF?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-Styling-06B6D4?logo=tailwindcss&logoColor=white)
 ![Firefox](https://img.shields.io/badge/Firefox-Supported-FF7139?logo=firefoxbrowser&logoColor=white)
-![Chrome](https://img.shields.io/badge/Chrome-Supported-4285F4?logo=googlechrome&logoColor=white)
-![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-F7DF1E?logo=javascript&logoColor=black)
-![License](https://img.shields.io/badge/License-MIT-green)
+
+![Better Homepage](https://img.shields.io/badge/Better_Homepage-Keyboard_First-8B5CF6)
+![New Tab](https://img.shields.io/badge/New_Tab-Reimagined-18181B)
 
 
 ## Key Features
