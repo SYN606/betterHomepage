@@ -1,17 +1,13 @@
-import HeroTitle from "./HeroTitle";
-import PinnedShortcuts from "./PinnedShortcuts";
-import SearchBar from "./searchBar/SearchBar";
-import WidgetButtons from "./WidgetButtons";
-import BackgroundManager from "./BackgroundManager";
-import OnboardingModal from "./OnboardingModal";
-import GoogleServices from "./topBar/GoogleServices";
+// Background Components
+export { default as BackgroundManager } from "./background/BackgroundManager";
+export { default as CybermindWatermark } from "./background/CybermindWatermark";
+export { ThemeButton } from "./background/ThemeButton";
 
-export {
-    HeroTitle,
-    PinnedShortcuts,
-    SearchBar,
-    WidgetButtons,
-    BackgroundManager,
-    OnboardingModal,
-    GoogleServices
-}
+// Layout Components
+export { default as GoogleServices } from "./layout/GoogleServices";
+export { default as HeroTitle } from "./layout/HeroTitle";
+export { default as PinnedShortcuts } from "./layout/PinnedShortcuts";
+export { default as SearchBar } from "./layout/SearchBar";
+
+// Common Components
+export { default as OnboardingModal } from "./common/OnboardingModal";

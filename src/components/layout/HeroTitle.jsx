@@ -11,6 +11,7 @@ const GREETINGS = {
         "Another day ahead",
         "Early focus",
         "Slow and steady",
+        "Fresh perspectives",
     ],
     afternoon: [
         "Good Afternoon",
@@ -22,6 +23,7 @@ const GREETINGS = {
         "Focused hours",
         "Keep the flow",
         "On track",
+        "Steady pace",
     ],
     evening: [
         "Good Evening",
@@ -33,6 +35,7 @@ const GREETINGS = {
         "End of the day",
         "Take it easy",
         "Soft focus",
+        "Reflect & unwind",
     ],
     night: [
         "Quiet hours",
@@ -44,30 +47,21 @@ const GREETINGS = {
         "Still here",
         "Silent time",
         "After hours",
+        "Midnight thoughts",
     ],
-};
-
-const FONT_BY_PERIOD = {
-    morning: "font-[Poppins]",
-    afternoon: "font-[Inter]",
-    evening: "font-[Playfair_Display]",
-    night: "font-[Inter]",
 };
 
 export default function HeroTitle() {
     const [name, setName] = useState("");
     const [editing, setEditing] = useState(false);
     const [greeting, setGreeting] = useState("");
-    const [period, setPeriod] = useState("morning");
     const [time, setTime] = useState("");
 
     function getPeriod() {
         const hour = new Date().getHours();
-
         if (hour >= 5 && hour < 12) return "morning";
         if (hour >= 12 && hour < 17) return "afternoon";
         if (hour >= 17 && hour < 21) return "evening";
-
         return "night";
     }
 
@@ -86,18 +80,15 @@ export default function HeroTitle() {
         const currentPeriod = getPeriod();
         const storageKey = `hero-greeting-${todayKey()}-${currentPeriod}`;
 
-        if (!force && currentPeriod === period) return;
-
         let selected = localStorage.getItem(storageKey);
 
-        if (!selected) {
+        if (force || !selected) {
             const options = GREETINGS[currentPeriod];
             selected = options[Math.floor(Math.random() * options.length)];
             localStorage.setItem(storageKey, selected);
         }
 
         setGreeting(selected);
-        setPeriod(currentPeriod);
     }
 
     function saveName(value) {
@@ -107,7 +98,6 @@ export default function HeroTitle() {
 
     useEffect(() => {
         const savedName = localStorage.getItem("heroName");
-
         if (savedName) {
             setName(savedName);
         }
@@ -129,19 +119,25 @@ export default function HeroTitle() {
         };
     }, []);
 
-    const displayName = name?.trim() ? name : "Friend";
+    // Display only greeting if no name is provided
+    const greetingText = name?.trim() ? `${greeting}, ${name.trim()}` : greeting;
 
     return (
-        <section className="flex w-full flex-col items-center justify-center gap-4 px-4 text-center">
-            <div className="text-base md:text-lg font-medium tracking-[0.18em] text-white/85 uppercase drop-shadow-[0_2px_10px_rgba(0,0,0,0.35)]">
+        <section className="flex w-full flex-col items-center justify-center gap-3 px-4 text-center select-none">
+            {/* Dynamic Digital Clock */}
+            <div
+                style={{ fontFamily: "var(--font-mono)" }}
+                className="text-xs md:text-sm font-semibold tracking-[0.25em] text-text-muted uppercase drop-shadow-md"
+            >
                 {time}
             </div>
 
+            {/* Liquid Glass Greeting Box / Name Input */}
             {editing ? (
                 <input
                     autoFocus
                     value={name}
-                    placeholder="Your name"
+                    placeholder="Enter your name"
                     onChange={(e) => saveName(e.target.value)}
                     onBlur={() => setEditing(false)}
                     onKeyDown={(e) => {
@@ -149,55 +145,32 @@ export default function HeroTitle() {
                             setEditing(false);
                         }
                     }}
-                    className={`
-            w-full max-w-[700px]
-            rounded-3xl
-            border border-white/10
-            bg-black/30
-            px-8 py-4
-            text-center
-            text-2xl md:text-4xl
-            font-semibold
-            text-white
-            placeholder:text-white/40
-            backdrop-blur-2xl
-            outline-none
-            shadow-[0_8px_32px_rgba(0,0,0,0.35)]
-            transition-all
-            focus:bg-black/35
-            focus:border-white/20
-            ${FONT_BY_PERIOD[period]}
-          `}
+                    style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.03)",
+                        borderColor: "var(--glass-border-hover)",
+                        backdropFilter: "var(--glass-blur)",
+                        fontFamily: "var(--font-display)",
+                    }}
+                    className="w-full max-w-[640px] rounded-full border-[0.5px] px-8 py-3.5 text-center text-2xl md:text-3xl font-semibold text-text-primary placeholder:text-text-muted outline-none transition-all duration-300 focus:border-white/30"
                 />
             ) : (
                 <div
                     onClick={() => setEditing(true)}
-                    title="Click to set your name"
-                    className={`
-            w-full max-w-[700px]
-            cursor-text
-            select-none
-            rounded-3xl
-            border border-white/10
-            bg-black/30
-            px-8 py-4
-            text-center
-            text-2xl md:text-4xl
-            font-semibold
-            text-white
-            backdrop-blur-2xl
-            shadow-[0_8px_32px_rgba(0,0,0,0.35)]
-            transition-all duration-300
-            hover:scale-[1.01]
-            hover:bg-black/35
-            ${FONT_BY_PERIOD[period]}
-          `}
+                    title="Click to set or change your name"
+                    style={{
+                        backgroundColor: "transparent",
+                        borderColor: "var(--glass-border)",
+                        backdropFilter: "var(--glass-blur)",
+                        fontFamily: "var(--font-display)",
+                    }}
+                    className="w-full max-w-[640px] cursor-pointer rounded-full border-[0.5px] px-8 py-3.5 text-center text-2xl md:text-3xl font-semibold text-text-primary transition-all duration-300 hover:scale-[1.01] hover:border-white/30 hover:bg-white/5"
                 >
-                    {`${greeting}, ${displayName}`}
+                    {greetingText}
                 </div>
             )}
 
-            <p className="max-w-2xl text-sm md:text-base text-white/75 leading-relaxed">
+            {/* Subtitle Motivator */}
+            <p className="max-w-xl text-xs md:text-sm font-normal text-text-secondary leading-relaxed drop-shadow-sm">
                 Stay focused. Small progress still moves you forward.
             </p>
         </section>

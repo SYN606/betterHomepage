@@ -2,8 +2,20 @@ export const COMMAND_PREFIXES = [
   "yt",
   "wiki",
   "map",
+  "maps",
   "gm",
+  "mail",
   "gh",
+  "r",
+  "reddit",
+  "npm",
+  "pip",
+  "pypi",
+  "ai",
+  "gpt",
+  "doc",
+  "docs",
+  "drive",
   "calc",
   "notes",
   "todo",
@@ -30,24 +42,22 @@ export const isLikelyUrl = (input) => {
 
   // Supported protocols
   if (
-    /^(https?|ftp|ws|wss|file):\/\//.test(value) ||
-    /^mailto:/.test(value) ||
-    /^tel:/.test(value)
+    /^(https?|ftp|ws|wss|file):\/\//i.test(value) ||
+    /^mailto:/i.test(value) ||
+    /^tel:/i.test(value)
   ) {
     return true;
   }
 
-  // localhost support
-  if (value.startsWith("localhost")) return true;
+  // Localhost with optional port/path support
+  if (/^localhost(:\d+)?(\/.*)?$/i.test(value)) return true;
 
-  // Local/public IPv4 support
-  if (
-    /^(\d{1,3}\.){3}\d{1,3}(:\d+)?(\/.*)?$/.test(value)
-  ) {
+  // Local/public IPv4 support with optional port/path
+  if (/^(\d{1,3}\.){3}\d{1,3}(:\d+)?(\/.*)?$/.test(value)) {
     return true;
   }
 
-  // Domain + subdomain support
+  // Domain + Subdomain support
   if (
     /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(:\d+)?(\/.*)?$/i.test(
       value

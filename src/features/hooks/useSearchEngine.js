@@ -4,8 +4,7 @@ import {
     ENGINE_KEYS,
     FAVORITE_ENGINES,
     ENGINE_CATEGORIES,
-} from "./searchEngines";
-
+} from "../utils/searchEngines";
 export default function useSearchEngine(defaultKey = "google") {
     const getSafeDefault = () => {
         if (SEARCH_ENGINES[defaultKey]) return defaultKey;
@@ -15,6 +14,7 @@ export default function useSearchEngine(defaultKey = "google") {
     const [engineKey, setEngineKey] = useState(getSafeDefault());
     const [recentEngines, setRecentEngines] = useState([]);
 
+    // Initialize from LocalStorage
     useEffect(() => {
         try {
             const savedEngine = localStorage.getItem("searchEngineKey");
@@ -27,9 +27,7 @@ export default function useSearchEngine(defaultKey = "google") {
             if (savedRecent) {
                 const parsed = JSON.parse(savedRecent);
                 if (Array.isArray(parsed)) {
-                    setRecentEngines(
-                        parsed.filter((key) => SEARCH_ENGINES[key])
-                    );
+                    setRecentEngines(parsed.filter((key) => SEARCH_ENGINES[key]));
                 }
             }
         } catch {
@@ -38,23 +36,26 @@ export default function useSearchEngine(defaultKey = "google") {
         }
     }, []);
 
+    // Update Storage & Track Recent Engines on Selection Change
     useEffect(() => {
         try {
             localStorage.setItem("searchEngineKey", engineKey);
 
-            const updatedRecent = [
-                engineKey,
-                ...recentEngines.filter((key) => key !== engineKey),
-            ].slice(0, 5);
+            setRecentEngines((prev) => {
+                const updatedRecent = [
+                    engineKey,
+                    ...prev.filter((key) => key !== engineKey),
+                ].slice(0, 5);
 
-            setRecentEngines(updatedRecent);
+                localStorage.setItem(
+                    "recentSearchEngines",
+                    JSON.stringify(updatedRecent)
+                );
 
-            localStorage.setItem(
-                "recentSearchEngines",
-                JSON.stringify(updatedRecent)
-            );
+                return updatedRecent;
+            });
         } catch {
-            // silent fallback for extension safety
+            // Silent fallback for extension or iframe sandboxing safety
         }
     }, [engineKey]);
 
@@ -63,7 +64,7 @@ export default function useSearchEngine(defaultKey = "google") {
     };
 
     const favoriteEngines = useMemo(() => {
-        return FAVORITE_ENGINES.map((key) => ({
+        return (FAVORITE_ENGINES || []).map((key) => ({
             key,
             ...SEARCH_ENGINES[key],
         }));
@@ -77,21 +78,23 @@ export default function useSearchEngine(defaultKey = "google") {
     }, []);
 
     const categorizedEngines = useMemo(() => {
-        return ENGINE_CATEGORIES.map((category) => ({
-            category,
-            engines: ENGINE_KEYS.filter(
-                (key) => SEARCH_ENGINES[key].category === category
-            ).map((key) => ({
-                key,
-                ...SEARCH_ENGINES[key],
-            })),
-        })).filter((group) => group.engines.length > 0);
+        return (ENGINE_CATEGORIES || [])
+            .map((category) => ({
+                category,
+                engines: ENGINE_KEYS.filter(
+                    (key) => SEARCH_ENGINES[key]?.category === category
+                ).map((key) => ({
+                    key,
+                    ...SEARCH_ENGINES[key],
+                })),
+            }))
+            .filter((group) => group.engines.length > 0);
     }, []);
 
     return {
         engineKey,
         setEngineKey,
-        engine: SEARCH_ENGINES[engineKey],
+        engine: SEARCH_ENGINES[engineKey] || SEARCH_ENGINES["google"],
 
         allEngines,
         favoriteEngines,

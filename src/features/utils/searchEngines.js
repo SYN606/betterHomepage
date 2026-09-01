@@ -111,12 +111,23 @@ export const SEARCH_ENGINES = {
 
     gemini: {
         name: "Gemini",
-        description: "Ask AI and explore answers",
+        description: "Ask Google AI",
         url: "https://gemini.google.com/app",
         domain: "gemini.google.com",
         category: "ai",
         color: "#8E44AD",
         icon: "gemini",
+        favorite: false,
+    },
+
+    perplexity: {
+        name: "Perplexity",
+        description: "AI-powered conversational search",
+        url: "https://www.perplexity.ai/search?q=",
+        domain: "perplexity.ai",
+        category: "ai",
+        color: "#22B8CF",
+        icon: "perplexity",
         favorite: false,
     },
 };

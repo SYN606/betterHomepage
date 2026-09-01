@@ -4,96 +4,49 @@ import {
     SiGmail,
     SiYoutube,
     SiGoogledrive,
-    SiGooglemaps,
-    SiGooglecalendar,
     SiGooglephotos,
     SiGoogledocs,
-    SiGoogle,
+    SiGooglecalendar,
 } from "react-icons/si";
 
 const SERVICES = [
     {
-        name: "Google",
-        icon: FcGoogle,
-        url: "https://www.google.com",
-    },
-    {
         name: "Gmail",
         icon: SiGmail,
         url: "https://mail.google.com/mail/u/0/#inbox",
+        color: "#EA4335",
     },
     {
         name: "YouTube",
         icon: SiYoutube,
         url: "https://www.youtube.com/feed/subscriptions",
+        color: "#FF0000",
     },
     {
         name: "Drive",
         icon: SiGoogledrive,
         url: "https://drive.google.com/drive/my-drive",
+        color: "#4285F4",
     },
     {
         name: "Photos",
         icon: SiGooglephotos,
         url: "https://photos.google.com/library",
+        color: "#DB4437",
     },
     {
         name: "Docs",
         icon: SiGoogledocs,
         url: "https://docs.google.com/document/u/0/",
+        color: "#4285F4",
     },
     {
         name: "Calendar",
         icon: SiGooglecalendar,
         url: "https://calendar.google.com/calendar/u/0/r/week",
-    },
-    {
-        name: "Maps",
-        icon: SiGooglemaps,
-        url: "https://maps.google.com",
-    },
-    {
-        name: "Translate",
-        icon: SiGoogle,
-        url: "https://translate.google.com",
-    },
-    {
-        name: "Meet",
-        icon: SiGoogle,
-        url: "https://meet.google.com",
-    },
-    {
-        name: "Keep",
-        icon: SiGoogle,
-        url: "https://keep.google.com",
-    },
-    {
-        name: "News",
-        icon: SiGoogle,
-        url: "https://news.google.com",
-    },
-    {
-        name: "Gemini",
-        icon: SiGoogle,
-        url: "https://gemini.google.com",
+        color: "#1A73E8",
     },
 ];
-
-const SERVICE_COLORS = {
-    Google: "#4285F4",
-    Translate: "#4285F4",
-    Meet: "#34A853",
-    Keep: "#FABB05",
-    News: "#1A73E8",
-    Gemini: "#8E44AD",
-    Gmail: "#EA4335",
-    YouTube: "#FF0000",
-    Drive: "#4285F4",
-    Photos: "#DB4437",
-    Docs: "#4285F4",
-    Calendar: "#1A73E8",
-    Maps: "#34A853",
-};
 
 export default function GoogleServices() {
     const [open, setOpen] = useState(false);
@@ -111,23 +64,31 @@ export default function GoogleServices() {
             if (
                 panelRef.current &&
                 !panelRef.current.contains(event.target) &&
+                buttonRef.current &&
                 !buttonRef.current.contains(event.target)
             ) {
                 setOpen(false);
             }
         };
 
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setOpen(false);
+            }
+        };
+
         document.addEventListener("mousedown", handleOutsideClick);
+        document.addEventListener("keydown", handleKeyDown);
 
         return () => {
             document.removeEventListener("mousedown", handleOutsideClick);
+            document.removeEventListener("keydown", handleKeyDown);
         };
     }, [open]);
 
     const openService = (service) => {
         localStorage.setItem("google:lastService", service.name);
         setLastUsed(service.name);
-
         window.open(service.url, "_blank", "noopener,noreferrer");
         setOpen(false);
     };
@@ -138,7 +99,6 @@ export default function GoogleServices() {
             "_blank",
             "noopener,noreferrer"
         );
-
         setOpen(false);
     };
 
@@ -148,17 +108,16 @@ export default function GoogleServices() {
                 ref={buttonRef}
                 onClick={() => setOpen((prev) => !prev)}
                 title="Google Services"
-                className={`
-          flex h-10 w-10 items-center justify-center
-          rounded-full border border-white/10
-          backdrop-blur-xl transition-all
-          ${open
-                        ? "bg-black/65 ring-2 ring-white/20"
-                        : "bg-black/45 hover:bg-black/60"
-                    }
-        `}
+                aria-expanded={open}
+                aria-haspopup="true"
+                style={{
+                    backgroundColor: open ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.03)",
+                    borderColor: open ? "rgba(255, 255, 255, 0.3)" : "var(--glass-border)",
+                    backdropFilter: "var(--glass-blur)",
+                }}
+                className="flex h-9 w-9 items-center justify-center rounded-full border-[0.5px] text-text-primary transition-all duration-300 hover:scale-105 hover:border-white/30 hover:bg-white/10 cursor-pointer"
             >
-                <FcGoogle size={20} />
+                <FcGoogle size={18} />
             </button>
 
             {open && (
@@ -166,13 +125,19 @@ export default function GoogleServices() {
                     ref={panelRef}
                     role="menu"
                     aria-label="Google services"
-                    className="absolute right-0 z-40 mt-3 w-72 rounded-3xl border border-white/15 bg-black/70 p-4 shadow-[0_20px_60px_rgba(0,0,0,0.7)] backdrop-blur-2xl"
+                    style={{
+                        backgroundColor: "rgba(10, 14, 22, 0.65)",
+                        borderColor: "var(--glass-border)",
+                        backdropFilter: "var(--glass-blur)",
+                        boxShadow: "var(--shadow-glass)",
+                    }}
+                    className="absolute right-0 z-40 mt-3 w-64 rounded-3xl border-[0.5px] p-3.5 text-text-primary backdrop-blur-2xl transition-all"
                 >
-                    <div className="mb-3 text-center text-xs text-white/50">
-                        Google Services
+                    <div className="mb-2.5 text-center text-[11px] font-semibold tracking-wider text-text-muted uppercase">
+                        Google Workspace
                     </div>
 
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2">
                         {SERVICES.map((service) => {
                             const Icon = service.icon;
                             const active = lastUsed === service.name;
@@ -182,40 +147,34 @@ export default function GoogleServices() {
                                     key={service.name}
                                     onClick={() => openService(service)}
                                     title={service.name}
-                                    className={`
-                    group rounded-2xl border p-3
-                    transition-all
-                    ${active
-                                            ? "border-white/30 bg-white/15"
-                                            : "border-white/10 bg-white/5 hover:bg-white/12"
-                                        }
-                  `}
+                                    style={{
+                                        backgroundColor: active ? "rgba(255, 255, 255, 0.08)" : "rgba(255, 255, 255, 0.02)",
+                                        borderColor: active ? "var(--glass-border-hover)" : "var(--glass-border)",
+                                    }}
+                                    className="group flex flex-col items-center justify-center rounded-2xl border-[0.5px] p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-white/30 hover:bg-white/10 cursor-pointer"
                                 >
-                                    <div className="flex flex-col items-center gap-2">
-                                        <Icon
-                                            className="text-xl transition-transform group-hover:scale-110"
-                                            style={{
-                                                color: SERVICE_COLORS[service.name],
-                                                opacity: active ? 1 : 0.9,
-                                            }}
-                                        />
-
-                                        <span className="text-[11px] text-white/75">
-                                            {service.name}
-                                        </span>
-                                    </div>
+                                    <Icon
+                                        className="text-xl transition-transform duration-200 group-hover:scale-110"
+                                        style={{ color: service.color }}
+                                    />
+                                    <span className="mt-1.5 text-[10px] font-semibold text-text-secondary group-hover:text-text-primary">
+                                        {service.name}
+                                    </span>
                                 </button>
                             );
                         })}
                     </div>
 
-                    <div className="my-4 h-px bg-white/10" />
+                    <div
+                        style={{ borderColor: "var(--glass-border)" }}
+                        className="my-3 border-t-[0.5px]"
+                    />
 
                     <button
                         onClick={openGoogleAccount}
-                        className="w-full text-center text-sm text-white/60 transition hover:text-white"
+                        className="w-full rounded-xl py-1 text-center text-xs font-medium text-text-muted transition-colors hover:bg-white/5 hover:text-text-primary cursor-pointer"
                     >
-                        Manage your Google Account
+                        Manage Google Account
                     </button>
                 </div>
             )}

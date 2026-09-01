@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import {
-  HeroTitle,
-  SearchBar,
-  WidgetButtons,
-  PinnedShortcuts,
-  OnboardingModal,
   BackgroundManager,
+  CybermindWatermark,
   GoogleServices,
+  HeroTitle,
+  OnboardingModal,
+  PinnedShortcuts,
+  SearchBar,
+  ThemeButton,
 } from "./components";
 
 export default function App() {
@@ -25,19 +26,22 @@ export default function App() {
   };
 
   return (
-    <main className="relative min-h-screen w-full overflow-hidden bg-bg text-text">
+    <main className="relative min-h-screen w-full overflow-hidden text-text-primary">
+      {/* Background Layers */}
       <BackgroundManager />
+      <CybermindWatermark />
 
-      {showOnboarding && (
-        <OnboardingModal onClose={closeOnboarding} />
-      )}
+      {/* Modals */}
+      {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
 
+      {/* Navigation Docks & Widgets */}
       <PinnedShortcuts />
 
-      <div className="absolute top-6 right-6 z-20">
+      <div className="fixed top-6 right-6 z-20">
         <GoogleServices />
       </div>
 
+      {/* Hero Content Section */}
       <section className="relative z-10 flex min-h-screen flex-col items-center justify-center px-6">
         <div className="w-full max-w-3xl space-y-6 text-center">
           <HeroTitle />
@@ -45,8 +49,9 @@ export default function App() {
         </div>
       </section>
 
-      <div className="absolute bottom-6 right-6 z-20">
-        <WidgetButtons />
+      {/* Dynamic Theme & Wallpaper Switcher */}
+      <div className="fixed bottom-6 right-6 z-20">
+        <ThemeButton />
       </div>
     </main>
   );
