@@ -1,7 +1,6 @@
-// Background Components
-export { default as BackgroundManager } from "./background/BackgroundManager";
+// Background & Theme Components
 export { default as CybermindWatermark } from "./background/CybermindWatermark";
-export { ThemeButton } from "./background/ThemeButton";
+export { default as ThemeManager } from "./background/ThemeManager";
 
 // Layout Components
 export { default as GoogleServices } from "./layout/GoogleServices";

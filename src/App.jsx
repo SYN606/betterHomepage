@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import {
-  BackgroundManager,
   CybermindWatermark,
   GoogleServices,
   HeroTitle,
   OnboardingModal,
   PinnedShortcuts,
   SearchBar,
-  ThemeButton,
+  ThemeManager,
 } from "./components";
 
 export default function App() {
@@ -27,8 +26,8 @@ export default function App() {
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden text-text-primary">
-      {/* Background Layers */}
-      <BackgroundManager />
+      {/* Dynamic Background & Combined Theme System */}
+      <ThemeManager />
       <CybermindWatermark />
 
       {/* Modals */}
@@ -48,11 +47,6 @@ export default function App() {
           <SearchBar />
         </div>
       </section>
-
-      {/* Dynamic Theme & Wallpaper Switcher */}
-      <div className="fixed bottom-6 right-6 z-20">
-        <ThemeButton />
-      </div>
     </main>
   );
 }
