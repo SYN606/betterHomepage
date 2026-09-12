@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "package": "web-ext build --source-dir extension --overwrite-dest",
+    "package:lint": "web-ext lint --source-dir extension"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
@@ -19,7 +21,8 @@
     "@eslint/js": "^9.39.1",
     "eslint": "^9.39.1",
     "globals": "^16.5.0",
-    "vite": "npm:rolldown-vite@7.2.5"
+    "vite": "npm:rolldown-vite@7.2.5",
+    "web-ext": "^10.6.0"
   },
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
