@@ -13,13 +13,31 @@
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon_io/favicon-16x16.png">
   <link rel="manifest" href="/favicon_io/site.webmanifest">
 
-  <!-- Externalized Theme Init -->
-  <script type="module" src="/src/theme-init.js"></script>
+  <!-- Instant Synchronous Theme Initialization (Eliminates FOUC) -->
+  <script>
+    (function () {
+      try {
+        var theme = localStorage.getItem("activeMode") || localStorage.getItem("theme");
+        if (theme && theme !== "default") {
+          document.documentElement.setAttribute("data-theme", theme);
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Preconnect & Non-blocking Font Loading for Instant Rendering -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Victor+Mono:ital,wght@0,400;0,600;1,400&display=swap"
+    media="print"
+    onload="this.media='all'"
+  >
 </head>
 
 <body class="overflow-hidden">
   <div id="root"></div>
-  <div id="modal-root"></div>
 
   <script type="module" src="/src/main.jsx"></script>
 </body>

@@ -1,311 +1,324 @@
-import { useEffect, useState } from "react";
-import { FiEdit2, FiPlus, FiTrash2, FiX } from "react-icons/fi";
+import { createSignal, onMount, Show, For } from "solid-js";
+import { EditIcon, PlusIcon, TrashIcon, XIcon } from "../common/Icons";
 
 const MAX_SHORTCUTS = 8;
 
 const DEFAULT_SHORTCUTS = [
-    { name: "Google", url: "https://google.com" },
-    { name: "YouTube", url: "https://youtube.com" },
-    { name: "GitHub", url: "https://github.com" },
-    { name: "Gmail", url: "https://mail.google.com" },
+  { name: "Google", url: "https://google.com" },
+  { name: "YouTube", url: "https://youtube.com" },
+  { name: "GitHub", url: "https://github.com" },
+  { name: "Gmail", url: "https://mail.google.com" },
 ];
 
 export default function PinnedShortcuts() {
-    const [shortcuts, setShortcuts] = useState([]);
-    const [showEditor, setShowEditor] = useState(false);
-    const [error, setError] = useState("");
-    const [current, setCurrent] = useState({
-        index: null,
-        name: "",
-        url: "",
-        icon: "",
-    });
+  const [shortcuts, setShortcuts] = createSignal([]);
+  const [showEditor, setShowEditor] = createSignal(false);
+  const [error, setError] = createSignal("");
+  const [current, setCurrent] = createSignal({
+    index: null,
+    name: "",
+    url: "",
+    icon: "",
+  });
 
-    useEffect(() => {
-        const saved = localStorage.getItem("pinnedShortcuts");
+  function getFavicon(url) {
+    try {
+      const parsed = new URL(url);
+      return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=64`;
+    } catch {
+      return "";
+    }
+  }
 
-        if (saved) {
-            setShortcuts(JSON.parse(saved));
-            return;
-        }
+  const saveShortcuts = (data) => {
+    setShortcuts(data);
+    localStorage.setItem("pinnedShortcuts", JSON.stringify(data));
+  };
 
-        const starter = DEFAULT_SHORTCUTS.map((item) => ({
-            ...item,
-            icon: getFavicon(item.url),
-        }));
+  onMount(() => {
+    const saved = localStorage.getItem("pinnedShortcuts");
 
-        saveShortcuts(starter);
-    }, []);
-
-    const saveShortcuts = (data) => {
-        setShortcuts(data);
-        localStorage.setItem("pinnedShortcuts", JSON.stringify(data));
-    };
-
-    const normalizeUrl = (input) => {
-        const value = input.trim();
-
-        if (/^[a-zA-Z]+:\/\//.test(value)) {
-            return value;
-        }
-
-        if (
-            value.startsWith("localhost") ||
-            /^\d{1,3}(\.\d{1,3}){3}/.test(value)
-        ) {
-            return `http://${value}`;
-        }
-
-        return `https://${value}`;
-    };
-
-    function getFavicon(url) {
-        try {
-            const parsed = new URL(url);
-            return `https://www.google.com/s2/favicons?domain=${parsed.hostname}&sz=64`;
-        } catch {
-            return "";
-        }
+    if (saved) {
+      try {
+        setShortcuts(JSON.parse(saved));
+        return;
+      } catch {
+        // Fallback to default
+      }
     }
 
-    const openEditor = (index = null) => {
-        setError("");
+    const starter = DEFAULT_SHORTCUTS.map((item) => ({
+      ...item,
+      icon: getFavicon(item.url),
+    }));
 
-        if (index !== null) {
-            setCurrent({ index, ...shortcuts[index] });
-        } else {
-            setCurrent({ index: null, name: "", url: "", icon: "" });
-        }
+    saveShortcuts(starter);
+  });
 
-        setShowEditor(true);
-    };
+  const normalizeUrl = (input) => {
+    const value = input.trim();
 
-    const closeEditor = () => {
-        setShowEditor(false);
-        setError("");
-    };
+    if (/^[a-zA-Z]+:\/\//.test(value)) {
+      return value;
+    }
 
-    const handleSave = () => {
-        if (!current.name.trim() || !current.url.trim()) {
-            setError("Please fill both name and website fields.");
-            return;
-        }
+    if (
+      value.startsWith("localhost") ||
+      /^\d{1,3}(\.\d{1,3}){3}/.test(value)
+    ) {
+      return `http://${value}`;
+    }
 
-        const url = normalizeUrl(current.url);
-        const icon = getFavicon(url);
+    return `https://${value}`;
+  };
 
-        const duplicate = shortcuts.some(
-            (item, index) => item.url === url && current.index !== index
-        );
+  const openEditor = (index = null) => {
+    setError("");
 
-        if (duplicate) {
-            setError("This shortcut already exists.");
-            return;
-        }
+    if (index !== null) {
+      const item = shortcuts()[index];
+      setCurrent({ index, ...item });
+    } else {
+      setCurrent({ index: null, name: "", url: "", icon: "" });
+    }
 
-        let updated = [...shortcuts];
+    setShowEditor(true);
+  };
 
-        if (current.index !== null) {
-            updated[current.index] = {
-                name: current.name.trim(),
-                url,
-                icon,
-            };
-        } else {
-            if (shortcuts.length >= MAX_SHORTCUTS) {
-                setError(`Maximum ${MAX_SHORTCUTS} shortcuts allowed.`);
-                return;
-            }
+  const closeEditor = () => {
+    setShowEditor(false);
+    setError("");
+  };
 
-            updated.push({
-                name: current.name.trim(),
-                url,
-                icon,
-            });
-        }
+  const handleSave = () => {
+    const cur = current();
+    if (!cur.name.trim() || !cur.url.trim()) {
+      setError("Please fill both name and website fields.");
+      return;
+    }
 
-        saveShortcuts(updated);
-        closeEditor();
-    };
+    const url = normalizeUrl(cur.url);
+    const icon = getFavicon(url);
+    const currentList = shortcuts();
 
-    const deleteShortcut = (index) => {
-        const updated = shortcuts.filter((_, i) => i !== index);
-        saveShortcuts(updated);
-        closeEditor();
-    };
+    const duplicate = currentList.some(
+      (item, index) => item.url === url && cur.index !== index
+    );
 
-    return (
-        <>
-            {/* Floating Transparent Dock Sidebar */}
-            <div className="fixed left-5 top-1/2 z-20 -translate-y-1/2">
-                <div
-                    style={{
-                        backgroundColor: "transparent",
-                        borderColor: "var(--glass-border)",
-                        backdropFilter: "var(--glass-blur)",
-                    }}
-                    className="flex flex-col items-center gap-2.5 rounded-full border-[0.5px] p-2 transition-all duration-300 hover:border-white/20"
+    if (duplicate) {
+      setError("This shortcut already exists.");
+      return;
+    }
+
+    let updated = [...currentList];
+
+    if (cur.index !== null) {
+      updated[cur.index] = {
+        name: cur.name.trim(),
+        url,
+        icon,
+      };
+    } else {
+      if (currentList.length >= MAX_SHORTCUTS) {
+        setError(`Maximum ${MAX_SHORTCUTS} shortcuts allowed.`);
+        return;
+      }
+
+      updated.push({
+        name: cur.name.trim(),
+        url,
+        icon,
+      });
+    }
+
+    saveShortcuts(updated);
+    closeEditor();
+  };
+
+  const deleteShortcut = (index) => {
+    const updated = shortcuts().filter((_, i) => i !== index);
+    saveShortcuts(updated);
+    closeEditor();
+  };
+
+  return (
+    <>
+      {/* Floating Transparent Dock Sidebar */}
+      <div class="fixed left-5 top-1/2 z-20 -translate-y-1/2">
+        <div
+          style={{
+            "background-color": "transparent",
+            "border-color": "var(--glass-border)",
+            "backdrop-filter": "var(--glass-blur)",
+          }}
+          class="flex flex-col items-center gap-2.5 rounded-full border-[0.5px] p-2 transition-all duration-300 hover:border-white/20"
+        >
+          <For each={shortcuts()}>
+            {(shortcut, index) => (
+              <div class="group relative">
+                <button
+                  onClick={() =>
+                    window.open(shortcut.url, "_blank", "noopener,noreferrer")
+                  }
+                  style={{
+                    "background-color": "rgba(255, 255, 255, 0.02)",
+                    "border-color": "var(--glass-border)",
+                  }}
+                  class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-[0.5px] transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:bg-white/10 hover:border-white/30 cursor-pointer"
+                  title={shortcut.name}
                 >
-                    {shortcuts.map((shortcut, index) => (
-                        <div key={index} className="group relative">
-                            <button
-                                onClick={() =>
-                                    window.open(shortcut.url, "_blank", "noopener,noreferrer")
-                                }
-                                style={{
-                                    backgroundColor: "rgba(255, 255, 255, 0.02)",
-                                    borderColor: "var(--glass-border)",
-                                }}
-                                className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-[0.5px] transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:bg-white/10 hover:border-white/30 cursor-pointer"
-                                title={shortcut.name}
-                            >
-                                {shortcut.icon ? (
-                                    <img
-                                        src={shortcut.icon}
-                                        alt={shortcut.name}
-                                        className="h-5 w-5 object-contain transition-transform duration-300 group-hover:scale-110"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = "none";
-                                        }}
-                                    />
-                                ) : (
-                                    <span className="text-[11px] font-semibold text-text-primary uppercase">
-                                        {shortcut.name.charAt(0)}
-                                    </span>
-                                )}
-                            </button>
+                  <Show
+                    when={shortcut.icon}
+                    fallback={
+                      <span class="text-[11px] font-semibold text-text-primary uppercase">
+                        {shortcut.name.charAt(0)}
+                      </span>
+                    }
+                  >
+                    <img
+                      src={shortcut.icon}
+                      alt={shortcut.name}
+                      class="h-5 w-5 object-contain transition-transform duration-300 group-hover:scale-110"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                      }}
+                    />
+                  </Show>
+                </button>
 
-                            {/* Quick Edit Pin */}
-                            <button
-                                onClick={() => openEditor(index)}
-                                style={{
-                                    backgroundColor: "rgba(0, 0, 0, 0.6)",
-                                    borderColor: "var(--glass-border-hover)",
-                                }}
-                                className="absolute -right-1 -top-1 hidden h-4.5 w-4.5 items-center justify-center rounded-full border-[0.5px] text-text-primary backdrop-blur-md transition-transform duration-200 hover:scale-110 group-hover:flex cursor-pointer"
-                                title="Edit shortcut"
-                            >
-                                <FiEdit2 size={9} />
-                            </button>
-                        </div>
-                    ))}
+                {/* Quick Edit Pin */}
+                <button
+                  onClick={() => openEditor(index())}
+                  style={{
+                    "background-color": "rgba(0, 0, 0, 0.6)",
+                    "border-color": "var(--glass-border-hover)",
+                  }}
+                  class="absolute -right-1 -top-1 hidden h-4.5 w-4.5 items-center justify-center rounded-full border-[0.5px] text-text-primary backdrop-blur-md transition-transform duration-200 hover:scale-110 group-hover:flex cursor-pointer"
+                  title="Edit shortcut"
+                >
+                  <EditIcon class="w-2.5 h-2.5" />
+                </button>
+              </div>
+            )}
+          </For>
 
-                    {/* Add Shortcut Action */}
-                    {shortcuts.length < MAX_SHORTCUTS && (
-                        <button
-                            onClick={() => openEditor()}
-                            style={{
-                                borderColor: "var(--glass-border)",
-                            }}
-                            className="flex h-11 w-11 items-center justify-center rounded-full border-[0.5px] border-dashed text-text-muted transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:border-white/30 hover:bg-white/5 hover:text-text-primary cursor-pointer"
-                            title="Add shortcut"
-                        >
-                            <FiPlus size={16} />
-                        </button>
-                    )}
-                </div>
+          {/* Add Shortcut Action */}
+          <Show when={shortcuts().length < MAX_SHORTCUTS}>
+            <button
+              onClick={() => openEditor()}
+              style={{
+                "border-color": "var(--glass-border)",
+              }}
+              class="flex h-11 w-11 items-center justify-center rounded-full border-[0.5px] border-dashed text-text-muted transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:border-white/30 hover:bg-white/5 hover:text-text-primary cursor-pointer"
+              title="Add shortcut"
+            >
+              <PlusIcon class="w-4 h-4" />
+            </button>
+          </Show>
+        </div>
+      </div>
+
+      {/* Glassmorphic Modal Editor */}
+      <Show when={showEditor()}>
+        <div
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-md"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            style={{
+              "background-color": "rgba(10, 14, 22, 0.65)",
+              "border-color": "var(--glass-border)",
+              "backdrop-filter": "var(--glass-blur)",
+            }}
+            class="w-full max-w-sm rounded-3xl border-[0.5px] p-6 text-text-primary shadow-2xl backdrop-blur-2xl transition-all"
+          >
+            <div class="mb-5 flex items-center justify-between">
+              <h2 class="text-base font-semibold tracking-tight text-text-primary">
+                {current().index !== null ? "Edit Shortcut" : "Add Shortcut"}
+              </h2>
+
+              <button
+                onClick={closeEditor}
+                class="rounded-full p-1 text-text-muted transition-colors hover:bg-white/10 hover:text-text-primary cursor-pointer"
+              >
+                <XIcon class="w-4 h-4" />
+              </button>
             </div>
 
-            {/* Glassmorphic Modal Editor */}
-            {showEditor && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-md"
-                    role="dialog"
-                    aria-modal="true"
+            <div class="space-y-3">
+              <input
+                placeholder="Shortcut Name"
+                value={current().name}
+                onInput={(e) =>
+                  setCurrent((prev) => ({ ...prev, name: e.currentTarget.value }))
+                }
+                style={{
+                  "background-color": "rgba(255, 255, 255, 0.03)",
+                  "border-color": "var(--glass-border)",
+                }}
+                class="w-full rounded-2xl border-[0.5px] px-4 py-2 text-xs text-text-primary outline-none placeholder:text-text-muted transition-colors focus:border-white/30"
+              />
+
+              <input
+                placeholder="Website URL (e.g. github.com)"
+                value={current().url}
+                onInput={(e) =>
+                  setCurrent((prev) => ({ ...prev, url: e.currentTarget.value }))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSave();
+                  if (e.key === "Escape") closeEditor();
+                }}
+                style={{
+                  "background-color": "rgba(255, 255, 255, 0.03)",
+                  "border-color": "var(--glass-border)",
+                }}
+                class="w-full rounded-2xl border-[0.5px] px-4 py-2 text-xs text-text-primary outline-none placeholder:text-text-muted transition-colors focus:border-white/30"
+              />
+            </div>
+
+            <Show when={error()}>
+              <p class="mt-3 text-xs font-medium text-danger">{error()}</p>
+            </Show>
+
+            <div class="mt-6 flex items-center justify-between">
+              <Show
+                when={current().index !== null}
+                fallback={<div />}
+              >
+                <button
+                  onClick={() => deleteShortcut(current().index)}
+                  class="flex items-center gap-1.5 text-xs font-medium text-danger transition-colors hover:opacity-80 cursor-pointer"
                 >
-                    <div
-                        style={{
-                            backgroundColor: "rgba(10, 14, 22, 0.65)",
-                            borderColor: "var(--glass-border)",
-                            backdropFilter: "var(--glass-blur)",
-                        }}
-                        className="w-full max-w-sm rounded-3xl border-[0.5px] p-6 text-text-primary shadow-2xl backdrop-blur-2xl transition-all"
-                    >
-                        <div className="mb-5 flex items-center justify-between">
-                            <h2 className="text-base font-semibold tracking-tight text-text-primary">
-                                {current.index !== null ? "Edit Shortcut" : "Add Shortcut"}
-                            </h2>
+                  <TrashIcon class="w-3.5 h-3.5" />
+                  Delete
+                </button>
+              </Show>
 
-                            <button
-                                onClick={closeEditor}
-                                className="rounded-full p-1 text-text-muted transition-colors hover:bg-white/10 hover:text-text-primary cursor-pointer"
-                            >
-                                <FiX size={16} />
-                            </button>
-                        </div>
+              <div class="flex items-center gap-2">
+                <button
+                  onClick={closeEditor}
+                  class="rounded-xl px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:text-text-primary cursor-pointer"
+                >
+                  Cancel
+                </button>
 
-                        <div className="space-y-3">
-                            <input
-                                placeholder="Shortcut Name"
-                                value={current.name}
-                                onChange={(e) =>
-                                    setCurrent({ ...current, name: e.target.value })
-                                }
-                                style={{
-                                    backgroundColor: "rgba(255, 255, 255, 0.03)",
-                                    borderColor: "var(--glass-border)",
-                                }}
-                                className="w-full rounded-2xl border-[0.5px] px-4 py-2 text-xs text-text-primary outline-none placeholder:text-text-muted transition-colors focus:border-white/30"
-                            />
-
-                            <input
-                                placeholder="Website URL (e.g. github.com)"
-                                value={current.url}
-                                onChange={(e) =>
-                                    setCurrent({ ...current, url: e.target.value })
-                                }
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") handleSave();
-                                    if (e.key === "Escape") closeEditor();
-                                }}
-                                style={{
-                                    backgroundColor: "rgba(255, 255, 255, 0.03)",
-                                    borderColor: "var(--glass-border)",
-                                }}
-                                className="w-full rounded-2xl border-[0.5px] px-4 py-2 text-xs text-text-primary outline-none placeholder:text-text-muted transition-colors focus:border-white/30"
-                            />
-                        </div>
-
-                        {error && (
-                            <p className="mt-3 text-xs font-medium text-danger">{error}</p>
-                        )}
-
-                        <div className="mt-6 flex items-center justify-between">
-                            {current.index !== null ? (
-                                <button
-                                    onClick={() => deleteShortcut(current.index)}
-                                    className="flex items-center gap-1.5 text-xs font-medium text-danger transition-colors hover:opacity-80 cursor-pointer"
-                                >
-                                    <FiTrash2 size={13} />
-                                    Delete
-                                </button>
-                            ) : (
-                                <div />
-                            )}
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={closeEditor}
-                                    className="rounded-xl px-3 py-1.5 text-xs font-medium text-text-muted transition-colors hover:text-text-primary cursor-pointer"
-                                >
-                                    Cancel
-                                </button>
-
-                                <button
-                                    onClick={handleSave}
-                                    style={{
-                                        backgroundColor: "rgba(255, 255, 255, 0.08)",
-                                        borderColor: "var(--glass-border-hover)",
-                                    }}
-                                    className="rounded-xl border-[0.5px] px-4 py-1.5 text-xs font-semibold text-text-primary transition-all duration-200 hover:bg-white/15 cursor-pointer"
-                                >
-                                    Save
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </>
-    );
+                <button
+                  onClick={handleSave}
+                  style={{
+                    "background-color": "rgba(255, 255, 255, 0.08)",
+                    "border-color": "var(--glass-border-hover)",
+                  }}
+                  class="rounded-xl border-[0.5px] px-4 py-1.5 text-xs font-semibold text-text-primary transition-all duration-200 hover:bg-white/15 cursor-pointer"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Show>
+    </>
+  );
 }
