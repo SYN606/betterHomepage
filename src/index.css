@@ -211,15 +211,13 @@ body {
 @keyframes watermark-breath {
     0%,
     100% {
-        opacity: 0.025;
-        filter: drop-shadow(0 0 15px var(--color-primary-glow));
+        opacity: 0.03;
         transform: translate3d(0, 0, 0) scale(1);
     }
 
     50% {
-        opacity: 0.075;
-        filter: drop-shadow(0 0 45px var(--color-primary-soft)) drop-shadow(0 0 80px var(--color-accent));
-        transform: translate3d(0, -2px, 0) scale(1.025);
+        opacity: 0.08;
+        transform: translate3d(0, -2px, 0) scale(1.02);
     }
 }
 

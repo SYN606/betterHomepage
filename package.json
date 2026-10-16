@@ -1,7 +1,7 @@
 {
   "name": "betterhomepage",
   "private": true,
-  "version": "1.50.0",
+  "version": "1.51.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
+    "lucide-solid": "^1.56.0",
+    "solid-icons": "^1.2.0",
     "solid-js": "^1.9.15",
     "tailwindcss": "^4.1.17",
     "vite-plugin-solid": "^2.11.14"

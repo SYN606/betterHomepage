@@ -133,18 +133,3 @@ export const SEARCH_ENGINES = {
 };
 
 export const ENGINE_KEYS = Object.keys(SEARCH_ENGINES);
-
-export const FAVORITE_ENGINES = ENGINE_KEYS.filter(
-    (key) => SEARCH_ENGINES[key].favorite
-);
-
-export const ENGINE_CATEGORIES = [
-    "web",
-    "privacy",
-    "knowledge",
-    "video",
-    "developer",
-    "community",
-    "navigation",
-    "ai",
-];

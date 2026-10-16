@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "BetterHomepage by SYN606",
   "description": "Custom new tab dashboard",
-  "version": "1.50",
+  "version": "1.51",
   "chrome_url_overrides": {
     "newtab": "index.html"
   },

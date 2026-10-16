@@ -57,5 +57,3 @@ export const DORK_CATEGORIES = [
     ],
   },
 ];
-
-export const DORKS = DORK_CATEGORIES.flatMap((category) => category.items);

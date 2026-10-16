@@ -1,10 +1,14 @@
 import { createMemo, createSignal, onCleanup, onMount, Show, For } from "solid-js";
 import {
+  BingIcon,
   BraveIcon,
   ChevronDownIcon,
   DuckduckgoIcon,
+  GeminiIcon,
   GithubIcon,
   GoogleIcon,
+  MapsIcon,
+  PerplexityIcon,
   RedditIcon,
   SearchIcon,
   StackoverflowIcon,
@@ -22,15 +26,15 @@ const ENGINE_ICONS = {
   google: { Icon: GoogleIcon, color: "#4285F4" },
   duckduckgo: { Icon: DuckduckgoIcon, color: "#DE5833" },
   brave: { Icon: BraveIcon, color: "#FB542B" },
-  bing: { Icon: SearchIcon, color: "#008373" },
+  bing: { Icon: BingIcon, color: "#008373" },
   wikipedia: { Icon: WikipediaIcon, color: "#FFFFFF" },
   youtube: { Icon: YoutubeIcon, color: "#FF0000" },
   github: { Icon: GithubIcon, color: "#FFFFFF" },
   reddit: { Icon: RedditIcon, color: "#FF4500" },
   stackoverflow: { Icon: StackoverflowIcon, color: "#F48024" },
-  maps: { Icon: SearchIcon, color: "#34A853" },
-  gemini: { Icon: SearchIcon, color: "#8E44AD" },
-  perplexity: { Icon: SearchIcon, color: "#22B8CF" },
+  maps: { Icon: MapsIcon, color: "#34A853" },
+  gemini: { Icon: GeminiIcon, color: "#8E44AD" },
+  perplexity: { Icon: PerplexityIcon, color: "#22B8CF" },
 };
 
 const QUICK_COMMANDS = [
@@ -167,7 +171,7 @@ export default function SearchBar() {
               return <CurrentIcon class="w-4 h-4" style={{ color: meta.color }} />;
             })()}
             <ChevronDownIcon
-              class="text-text-muted transition-transform duration-200"
+              class="w-3.5 h-3.5 text-text-muted transition-transform duration-200"
               style={{
                 transform: menuOpen() ? "rotate(180deg)" : "rotate(0deg)",
               }}

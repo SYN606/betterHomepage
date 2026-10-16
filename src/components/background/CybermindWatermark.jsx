@@ -1,32 +1,9 @@
-import { createSignal, onMount, onCleanup, Show } from "solid-js";
+import { Show } from "solid-js";
+import { activeTheme } from "../../features/utils/themeState";
 
 export default function CybermindWatermark() {
-  const [currentMode, setCurrentMode] = createSignal(
-    typeof document !== "undefined"
-      ? document.documentElement.getAttribute("data-theme") || "default"
-      : "default"
-  );
-
-  onMount(() => {
-    const updateModeState = () => {
-      const activeMode =
-        document.documentElement.getAttribute("data-theme") || "default";
-      setCurrentMode(activeMode);
-    };
-
-    updateModeState();
-
-    const observer = new MutationObserver(updateModeState);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["data-theme"],
-    });
-
-    onCleanup(() => observer.disconnect());
-  });
-
   return (
-    <Show when={currentMode() !== "image"}>
+    <Show when={activeTheme() !== "image"}>
       <div class="pointer-events-none fixed inset-0 -z-10 flex flex-col items-center justify-center overflow-hidden select-none">
         {/* Subtle Radial Backlight */}
         <div

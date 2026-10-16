@@ -7,6 +7,13 @@ import {
   RefreshIcon,
   UploadIcon,
 } from "../common/Icons";
+import {
+  activeTheme,
+  setActiveTheme,
+  backgroundUrl,
+  setBackgroundUrl,
+  fetchRandomWallpaper,
+} from "../../features/utils/themeState";
 
 const THEMES = [
   { id: "default", name: "Onyx", icon: SparklesIcon },
@@ -18,45 +25,10 @@ const THEMES = [
 
 export default function ThemeManager() {
   const [isOpen, setIsOpen] = createSignal(false);
-  const [activeTheme, setActiveTheme] = createSignal(
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem("activeMode") || "default"
-      : "default"
-  );
-  const [backgroundUrl, setBackgroundUrl] = createSignal("");
 
   let uploadRef;
   let menuRef;
   let triggerBtnRef;
-
-  // Apply Theme to DOM and LocalStorage
-  createEffect(() => {
-    const current = activeTheme();
-    if (typeof document !== "undefined") {
-      if (current === "image") {
-        document.documentElement.setAttribute("data-theme", "image");
-      } else if (current === "default") {
-        document.documentElement.removeAttribute("data-theme");
-      } else {
-        document.documentElement.setAttribute("data-theme", current);
-      }
-      localStorage.setItem("activeMode", current);
-    }
-  });
-
-  const fetchRandomWallpaper = async () => {
-    try {
-      const response = await fetch(
-        `https://picsum.photos/1920/1080?random=${Date.now()}`
-      );
-      setBackgroundUrl(response.url);
-      localStorage.setItem("bgImage", response.url);
-      localStorage.setItem("bgProvider", "picsum");
-      localStorage.setItem("bgTimestamp", Date.now().toString());
-    } catch (err) {
-      console.error("Failed to load wallpaper:", err);
-    }
-  };
 
   // Load / Fetch Wallpaper when active theme is 'image'
   createEffect(() => {
@@ -103,10 +75,35 @@ export default function ThemeManager() {
 
     const reader = new FileReader();
     reader.onload = () => {
-      const base64 = reader.result;
-      setBackgroundUrl(base64);
-      localStorage.setItem("bgImage", base64);
-      localStorage.setItem("bgProvider", "upload");
+      const img = new window.Image();
+      img.onload = () => {
+        // Downscale large images to max 1920x1080 to prevent QuotaExceededError
+        const maxW = 1920;
+        const maxH = 1080;
+        let w = img.width;
+        let h = img.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL("image/jpeg", 0.85);
+          setBackgroundUrl(compressed);
+          try {
+            localStorage.setItem("bgImage", compressed);
+            localStorage.setItem("bgProvider", "upload");
+          } catch {
+            // Memory signal fallback if quota reached
+          }
+        }
+      };
+      img.src = reader.result;
     };
     reader.readAsDataURL(file);
   };

@@ -1,5 +1,27 @@
 import { createSignal, onMount, Show, For } from "solid-js";
 import { EditIcon, PlusIcon, TrashIcon, XIcon } from "../common/Icons";
+import { normalizeUrl } from "../../features";
+
+function ShortcutIcon(props) {
+  const [failed, setFailed] = createSignal(false);
+  return (
+    <Show
+      when={props.icon && !failed()}
+      fallback={
+        <span class="text-[11px] font-semibold text-text-primary uppercase select-none">
+          {props.name?.charAt(0) || "?"}
+        </span>
+      }
+    >
+      <img
+        src={props.icon}
+        alt={props.name}
+        class="h-5 w-5 object-contain transition-transform duration-300 group-hover:scale-110"
+        onError={() => setFailed(true)}
+      />
+    </Show>
+  );
+}
 
 const MAX_SHORTCUTS = 8;
 
@@ -55,22 +77,7 @@ export default function PinnedShortcuts() {
     saveShortcuts(starter);
   });
 
-  const normalizeUrl = (input) => {
-    const value = input.trim();
 
-    if (/^[a-zA-Z]+:\/\//.test(value)) {
-      return value;
-    }
-
-    if (
-      value.startsWith("localhost") ||
-      /^\d{1,3}(\.\d{1,3}){3}/.test(value)
-    ) {
-      return `http://${value}`;
-    }
-
-    return `https://${value}`;
-  };
 
   const openEditor = (index = null) => {
     setError("");
@@ -167,23 +174,7 @@ export default function PinnedShortcuts() {
                   class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-[0.5px] transition-all duration-300 hover:-translate-y-0.5 hover:scale-105 hover:bg-white/10 hover:border-white/30 cursor-pointer"
                   title={shortcut.name}
                 >
-                  <Show
-                    when={shortcut.icon}
-                    fallback={
-                      <span class="text-[11px] font-semibold text-text-primary uppercase">
-                        {shortcut.name.charAt(0)}
-                      </span>
-                    }
-                  >
-                    <img
-                      src={shortcut.icon}
-                      alt={shortcut.name}
-                      class="h-5 w-5 object-contain transition-transform duration-300 group-hover:scale-110"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none";
-                      }}
-                    />
-                  </Show>
+                  <ShortcutIcon icon={shortcut.icon} name={shortcut.name} />
                 </button>
 
                 {/* Quick Edit Pin */}

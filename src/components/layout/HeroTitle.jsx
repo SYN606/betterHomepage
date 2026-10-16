@@ -101,20 +101,36 @@ export default function HeroTitle() {
   }
 
   onMount(() => {
-    setTime(getFormattedTime());
+    const updateClock = () => {
+      const next = getFormattedTime();
+      if (next !== time()) {
+        setTime(next);
+      }
+    };
+
+    updateClock();
     updateGreeting(true);
 
-    const clockInterval = setInterval(() => {
-      setTime(getFormattedTime());
-    }, 1000);
+    // Check every 10s instead of 1s since display is hour:minute only
+    const clockInterval = setInterval(updateClock, 10000);
 
     const greetingInterval = setInterval(() => {
       updateGreeting(false);
     }, 15 * 60 * 1000);
 
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        updateClock();
+        updateGreeting(false);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
     onCleanup(() => {
       clearInterval(clockInterval);
       clearInterval(greetingInterval);
+      document.removeEventListener("visibilitychange", handleVisibility);
     });
   });
 

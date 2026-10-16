@@ -163,7 +163,7 @@ export default function GoogleServices() {
                     class="group flex flex-col items-center justify-center rounded-2xl border-[0.5px] p-2.5 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-white/30 hover:bg-white/10 cursor-pointer"
                   >
                     <Icon
-                      class="text-xl transition-transform duration-200 group-hover:scale-110"
+                      class="w-5 h-5 transition-transform duration-200 group-hover:scale-110"
                       style={{ color: service.color }}
                     />
                     <span class="mt-1.5 text-[10px] font-semibold text-text-secondary group-hover:text-text-primary">
